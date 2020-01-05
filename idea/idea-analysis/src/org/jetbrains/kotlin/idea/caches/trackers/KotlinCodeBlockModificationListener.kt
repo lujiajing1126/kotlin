@@ -96,9 +96,9 @@ class KotlinCodeBlockModificationListener(
                     // ignore formatting (whitespaces etc)
                     if (isFormattingChange(changeSet) || isCommentChange(changeSet)) return
 
-                    if (changedElements.all { !it.psi.isPhysical }) {
-                        if (inBlockModifications(changedElements, false).isEmpty()) {
-                            incNonPhysicalOutOfBlockModificationCount(ktFile)
+                    if (changedElements.none { it.psi.isPhysical }) {
+                        if (inBlockModifications(changedElements, skipNonPhysical = false).isEmpty()) {
+                            ktFile.incNonPhysicalOutOfBlockModificationCount()
                         }
                         return
                     }
@@ -120,7 +120,7 @@ class KotlinCodeBlockModificationListener(
                         }
                     }
 
-                    incOutOfBlockModificationCount(ktFile)
+                    ktFile.incOutOfBlockModificationCount()
                 } else {
                     inBlockElements.forEach { it.containingKtFile.addInBlockModifiedItem(it) }
                 }
@@ -169,21 +169,6 @@ class KotlinCodeBlockModificationListener(
     companion object {
         private fun isReplLine(file: VirtualFile): Boolean {
             return file.getUserData(KOTLIN_CONSOLE_KEY) == true
-        }
-
-        private fun incOutOfBlockModificationCount(file: KtFile, key: Key<Long>) {
-            file.clearInBlockModifications()
-
-            val count = file.getUserData(key) ?: 0
-            file.putUserData(key, count + 1)
-        }
-
-        private fun incOutOfBlockModificationCount(file: KtFile) {
-            incOutOfBlockModificationCount(file, FILE_OUT_OF_BLOCK_MODIFICATION_COUNT)
-        }
-
-        private fun incNonPhysicalOutOfBlockModificationCount(file: KtFile) {
-            incOutOfBlockModificationCount(file, NON_PHYSICAL_FILE_OUT_OF_BLOCK_MODIFICATION_COUNT)
         }
 
         private fun incFileModificationCount(file: KtFile) {
@@ -363,13 +348,28 @@ private val PER_FILE_MODIFICATION_TRACKER = Key<SimpleModificationTracker>("FILE
 val KtFile.perFileModificationTracker: ModificationTracker
     get() = putUserDataIfAbsent(PER_FILE_MODIFICATION_TRACKER, SimpleModificationTracker())
 
+private fun KtFile.incOutOfBlockModificationCount(key: Key<Long>) {
+    clearInBlockModifications()
+
+    val count = getUserData(key) ?: 0
+    putUserData(key, count + 1)
+}
+
 private val FILE_OUT_OF_BLOCK_MODIFICATION_COUNT = Key<Long>("FILE_OUT_OF_BLOCK_MODIFICATION_COUNT")
 
 val KtFile.outOfBlockModificationCount: Long by NotNullableUserDataProperty(FILE_OUT_OF_BLOCK_MODIFICATION_COUNT, 0)
 
+private fun KtFile.incOutOfBlockModificationCount() {
+    incOutOfBlockModificationCount(FILE_OUT_OF_BLOCK_MODIFICATION_COUNT)
+}
+
 private val NON_PHYSICAL_FILE_OUT_OF_BLOCK_MODIFICATION_COUNT = Key<Long>("NON_PHYSICAL_FILE_OUT_OF_BLOCK_MODIFICATION_COUNT")
 
 val KtFile.outOfBlockNonPhysicalModificationCount: Long by NotNullableUserDataProperty(NON_PHYSICAL_FILE_OUT_OF_BLOCK_MODIFICATION_COUNT, 0)
+
+private fun KtFile.incNonPhysicalOutOfBlockModificationCount() {
+    incOutOfBlockModificationCount(NON_PHYSICAL_FILE_OUT_OF_BLOCK_MODIFICATION_COUNT)
+}
 
 /**
  * inBlockModifications is a collection of block elements those have in-block modifications
