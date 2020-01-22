@@ -13,19 +13,30 @@ import org.jetbrains.kotlin.resolve.calls.components.PostponedArgumentsAnalyzer
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 
-class CandidateFactory(
-    val bodyResolveComponents: BodyResolveComponents,
-    val callInfo: CallInfo
+class CandidateFactory private constructor(
+    private val bodyResolveComponents: BodyResolveComponents,
+    val callInfo: CallInfo,
+    private val baseSystem: ConstraintStorage
 ) {
 
-    private val baseSystem: ConstraintStorage
-
-    init {
-        val system = bodyResolveComponents.inferenceComponents.createConstraintSystem()
-        callInfo.arguments.forEach {
-            system.addSubsystemFromExpression(it)
+    companion object {
+        private fun buildBaseSystem(bodyResolveComponents: BodyResolveComponents, callInfo: CallInfo): ConstraintStorage {
+            val system = bodyResolveComponents.inferenceComponents.createConstraintSystem()
+            callInfo.arguments.forEach {
+                system.addSubsystemFromExpression(it)
+            }
+            return system.asReadOnlyStorage()
         }
-        baseSystem = system.asReadOnlyStorage()
+    }
+
+    constructor(bodyResolveComponents: BodyResolveComponents, callInfo: CallInfo) :
+            this(bodyResolveComponents, callInfo, buildBaseSystem(bodyResolveComponents, callInfo))
+
+    fun replaceCallInfo(callInfo: CallInfo): CandidateFactory {
+        if (this.callInfo.arguments.size != callInfo.arguments.size) {
+            throw AssertionError("Incorrect replacement of call info in CandidateFactory")
+        }
+        return CandidateFactory(bodyResolveComponents, callInfo, baseSystem)
     }
 
     fun createCandidate(

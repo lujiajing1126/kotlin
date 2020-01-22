@@ -410,18 +410,19 @@ class FirNewTowerResolver(
     ): CandidateCollector {
         // TODO: add flag receiver / non-receiver position
         this.implicitReceiverValues = implicitReceiverValues
+        val candidateFactory = CandidateFactory(components, info)
+        manager.candidateFactory = candidateFactory
         if (info.callKind == CallKind.CallableReference && info.stubReceiver != null) {
-            manager.stubReceiverCandidateFactory = CandidateFactory(components, info.replaceExplicitReceiver(info.stubReceiver))
+            manager.stubReceiverCandidateFactory = candidateFactory.replaceCallInfo(info.replaceExplicitReceiver(info.stubReceiver))
         }
-        manager.candidateFactory = CandidateFactory(components, info)
         manager.resultCollector = collector
         if (info.callKind == CallKind.Function) {
             manager.invokeReceiverCollector = CandidateCollector(components, components.resolutionStageRunner)
             manager.invokeReceiverCandidateFactory = CandidateFactory(components, info.replaceWithVariableAccess())
             if (info.explicitReceiver != null) {
-                manager.invokeBuiltinExtensionReceiverCandidateFactory = CandidateFactory(
-                    components, info.replaceWithVariableAccess().replaceExplicitReceiver(null)
-                )
+                with(manager.invokeReceiverCandidateFactory) {
+                    manager.invokeBuiltinExtensionReceiverCandidateFactory = replaceCallInfo(callInfo.replaceExplicitReceiver(null))
+                }
             }
         }
 

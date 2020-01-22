@@ -23,6 +23,8 @@ class TowerResolveManager internal constructor(private val towerResolver: FirNew
 
     lateinit var candidateFactory: CandidateFactory
 
+    lateinit var invokeOnGivenReceiverCandidateFactory: CandidateFactory
+
     lateinit var invokeReceiverCandidateFactory: CandidateFactory
 
     lateinit var invokeBuiltinExtensionReceiverCandidateFactory: CandidateFactory
@@ -86,7 +88,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirNew
                     resultCollector,
                     // TODO: performance?
                     if (invokeResolveMode == InvokeResolveMode.IMPLICIT_CALL_ON_GIVEN_RECEIVER) {
-                        CandidateFactory(towerResolver.components, info)
+                        invokeOnGivenReceiverCandidateFactory
                     } else candidateFactory,
                     group
                 )
@@ -154,6 +156,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirNew
                                 }
 
                             val explicitReceiver = ExpressionReceiverValue(invokeReceiverExpression)
+                            invokeOnGivenReceiverCandidateFactory = CandidateFactory(towerResolver.components, invokeFunctionInfo)
                             when {
                                 invokeBuiltinExtensionMode -> {
                                     towerResolver.enqueueResolverForBuiltinInvokeExtensionWithExplicitArgument(
