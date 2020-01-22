@@ -85,19 +85,20 @@ class TowerGroup private constructor(private val list: List<TowerGroupKind>) : C
     override fun compareTo(other: TowerGroup): Int {
         var index = 0
         while (index < list.size) {
-            if (index >= other.list.size) return -1
+            if (index >= other.list.size) return 1
             when {
                 list[index] < other.list[index] -> return -1
                 list[index] > other.list[index] -> return 1
             }
             index++
         }
-        if (index < other.list.size) return 1
+        if (index < other.list.size) return -1
         return 0
     }
 }
 
-fun test() {
-    TowerGroup.Implicit(1).Implicit(2)
-    TowerGroup.Implicit(3).Member
+fun main() {
+    println(TowerGroup.Member < TowerGroup.Last)
+    println(TowerGroup.Member < TowerGroup.Member.Weakened(1))
+    println(TowerGroup.Member.Weakened(1) < TowerGroup.Member)
 }
