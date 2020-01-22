@@ -54,7 +54,7 @@ class FirCallResolver(
         this.transformer = transformer
     }
 
-    private val towerResolver = FirNewTowerResolver(
+    private val towerResolver = FirTowerResolver(
         returnTypeCalculator, this, resolutionStageRunner,
         topLevelScopes = topLevelScopes.asReversed(),
         localScopes = localScopes.asReversed()

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.HIDES_MEMBERS_NAME_LIST
 
-class FirNewTowerResolver(
+class FirTowerResolver(
     val typeCalculator: ReturnTypeCalculator,
     val components: BodyResolveComponents,
     resolutionStageRunner: ResolutionStageRunner,

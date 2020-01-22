@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import java.util.*
 
-class TowerResolveManager internal constructor(private val towerResolver: FirNewTowerResolver) {
+class TowerResolveManager internal constructor(private val towerResolver: FirTowerResolver) {
     private val queue = PriorityQueue<TowerInvokeResolveQuery>()
 
     private var group = TowerGroup.Start
