@@ -33,3 +33,13 @@ object O {
         }
     }
 }
+
+class Generator(val codegen: Any) {
+    private fun gen(): Any =
+        object : Wrapper(true) {
+            private fun invokeFunction() {
+                val c = codegen
+                val cc = codegen.hashCode()
+            }
+        }
+}

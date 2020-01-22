@@ -76,3 +76,27 @@ FILE: O.kt
         }
 
     }
+    public final class Generator : R|kotlin/Any| {
+        public constructor(codegen: R|kotlin/Any|): R|Generator| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val codegen: R|kotlin/Any| = R|<local>/codegen|
+            public get(): R|kotlin/Any|
+
+        private final fun gen(): R|kotlin/Any| {
+            ^gen object : R|Wrapper| {
+                private constructor(): R|Wrapper| {
+                    super<R|Wrapper|>(Boolean(true))
+                }
+
+                private final fun invokeFunction(): R|kotlin/Unit| {
+                    lval c: R|kotlin/Any| = this@R|/Generator|.R|/Generator.codegen|
+                    lval cc: R|kotlin/Int| = this@R|/Generator|.R|/Generator.codegen|.R|kotlin/Any.hashCode|()
+                }
+
+            }
+
+        }
+
+    }
