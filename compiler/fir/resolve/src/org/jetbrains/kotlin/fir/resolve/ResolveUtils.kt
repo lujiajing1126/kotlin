@@ -323,9 +323,7 @@ fun BodyResolveComponents.typeForQualifier(resolvedQualifier: FirResolvedQualifi
         typeForQualifierByDeclaration(declaration, resultType, session)?.let { return it }
     }
     // TODO: Handle no value type here
-    return resultType.resolvedTypeFromPrototype(
-        session.builtinTypes.unitType.type
-    )
+    return session.builtinTypes.unitType
 }
 
 internal fun typeForReifiedParameterReference(parameterReference: FirResolvedReifiedParameterReference): FirTypeRef {

@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirStaticScope
 import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.HIDES_MEMBERS_NAME_LIST
@@ -89,14 +90,17 @@ class FirNewTowerResolver(
             if (collector.isSuccess()) return collector
         }
 
-        // TODO: check we have a value
         if (resolvedQualifier.classId != null) {
+            val typeRef = resolvedQualifier.typeRef
+            // NB: yet built-in Unit is used for "no-value" type
             if (info.callKind == CallKind.CallableReference) {
-                if (info.stubReceiver != null) {
-                    runResolverForExpressionReceiver(info.replaceExplicitReceiver(info.stubReceiver), collector, info.stubReceiver, manager)
+                if (info.stubReceiver != null || typeRef !is FirImplicitBuiltinTypeRef) {
+                    runResolverForExpressionReceiver(info, collector, resolvedQualifier, manager)
                 }
             } else {
-                runResolverForExpressionReceiver(info, collector, resolvedQualifier, manager)
+                if (typeRef !is FirImplicitBuiltinTypeRef) {
+                    runResolverForExpressionReceiver(info, collector, resolvedQualifier, manager)
+                }
             }
         }
 
