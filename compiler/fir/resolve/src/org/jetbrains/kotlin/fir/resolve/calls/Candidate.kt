@@ -49,19 +49,19 @@ data class CallInfo(
     fun replaceWithVariableAccess(): CallInfo =
         CallInfo(
             CallKind.VariableAccess, name, explicitReceiver, emptyList(),
-            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs
+            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs, stubReceiver
         )
 
     fun replaceExplicitReceiver(explicitReceiver: FirExpression?): CallInfo =
         CallInfo(
             callKind, name, explicitReceiver, arguments,
-            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs
+            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs, stubReceiver
         )
 
     fun withReceiverAsArgument(receiverExpression: FirExpression): CallInfo =
         CallInfo(
             callKind, name, explicitReceiver, listOf(receiverExpression) + arguments,
-            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs
+            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs, stubReceiver
         )
 }
 

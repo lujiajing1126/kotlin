@@ -93,7 +93,7 @@ class FirNewTowerResolver(
         if (resolvedQualifier.classId != null) {
             if (info.callKind == CallKind.CallableReference) {
                 if (info.stubReceiver != null) {
-                    runResolverForExpressionReceiver(info.replaceExplicitReceiver(info.stubReceiver), collector, resolvedQualifier, manager)
+                    runResolverForExpressionReceiver(info.replaceExplicitReceiver(info.stubReceiver), collector, info.stubReceiver, manager)
                 }
             } else {
                 runResolverForExpressionReceiver(info, collector, resolvedQualifier, manager)
