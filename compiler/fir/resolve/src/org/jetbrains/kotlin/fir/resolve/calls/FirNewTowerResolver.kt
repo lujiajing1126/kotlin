@@ -118,12 +118,15 @@ class FirNewTowerResolver(
         if (shouldProcessExtensionsBeforeMembers) {
             // Special case (extension hides member)
             for ((index, topLevelScope) in topLevelScopes.withIndex()) {
-                manager.processLevel(
-                    ScopeTowerLevel(
-                        session, components, topLevelScope, extensionsOnly = true
-                    ), info, TowerGroup.TopPrioritized(index)
-                )
-                if (collector.isSuccess()) return collector
+                for ((implicitReceiverValue, usableAsValue, depth) in implicitReceivers) {
+                    if (!usableAsValue) continue
+                    manager.processLevel(
+                        ScopeTowerLevel(
+                            session, components, topLevelScope, extensionReceiver = implicitReceiverValue, extensionsOnly = true
+                        ), info, TowerGroup.TopPrioritized(index).Implicit(depth)
+                    )
+                    if (collector.isSuccess()) return collector
+                }
             }
         }
         for ((index, localScope) in localScopes.withIndex()) {
@@ -215,11 +218,6 @@ class FirNewTowerResolver(
         if (shouldProcessExtensionsBeforeMembers) {
             // Special case (extension hides member)
             for ((index, topLevelScope) in topLevelScopes.withIndex()) {
-                manager.enqueueLevelForInvoke(
-                    ScopeTowerLevel(
-                        session, components, topLevelScope, extensionsOnly = true
-                    ), info, TowerGroup.TopPrioritized(index), InvokeResolveMode.RECEIVER_FOR_INVOKE_BUILTIN_EXTENSION
-                )
                 manager.processLevel(
                     ScopeTowerLevel(
                         session, components, topLevelScope, extensionReceiver = explicitReceiverValue, extensionsOnly = true
