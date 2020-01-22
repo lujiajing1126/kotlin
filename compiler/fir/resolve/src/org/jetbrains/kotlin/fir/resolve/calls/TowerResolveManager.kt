@@ -164,6 +164,9 @@ class TowerResolveManager internal constructor(private val towerResolver: FirNew
                                     towerResolver.enqueueResolverForBuiltinInvokeExtensionWithImplicitArgument(
                                         invokeFunctionInfo, explicitReceiver, this@TowerResolveManager
                                     )
+                                    towerResolver.enqueueResolverForInvoke(
+                                        invokeFunctionInfo, explicitReceiver, this@TowerResolveManager
+                                    )
                                 }
                                 else -> {
                                     towerResolver.enqueueResolverForInvoke(
