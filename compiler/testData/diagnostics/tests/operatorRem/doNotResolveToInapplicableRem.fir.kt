@@ -10,5 +10,5 @@ object RemExtension
 operator fun RemExtension.rem(x: Int) {}
 
 fun foo() {
-    OldMod % 123
+    OldMod <!INAPPLICABLE_CANDIDATE!>%<!> 123
 }
