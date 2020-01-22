@@ -85,7 +85,7 @@ class FirNewTowerResolver(
 
         if (qualifierScope != null) {
             manager.processLevel(
-                ScopeTowerLevel(session, components, qualifierScope), info, TowerGroup.Qualifier
+                ScopeTowerLevel(session, components, qualifierScope), info.noStubReceiver(), TowerGroup.Qualifier
             )
             if (collector.isSuccess()) return collector
         }

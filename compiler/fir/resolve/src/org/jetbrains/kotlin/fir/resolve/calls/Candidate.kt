@@ -46,6 +46,12 @@ data class CallInfo(
 ) {
     val argumentCount get() = arguments.size
 
+    fun noStubReceiver(): CallInfo =
+        if (stubReceiver == null) this else CallInfo(
+            callKind, name, explicitReceiver, arguments,
+            isSafeCall, typeArguments, session, containingFile, implicitReceiverStack, expectedType, outerCSBuilder, lhs, null
+        )
+
     fun replaceWithVariableAccess(): CallInfo =
         CallInfo(
             CallKind.VariableAccess, name, explicitReceiver, emptyList(),
