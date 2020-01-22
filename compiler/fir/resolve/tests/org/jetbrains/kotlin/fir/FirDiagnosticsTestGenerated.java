@@ -599,6 +599,11 @@ public class FirDiagnosticsTestGenerated extends AbstractFirDiagnosticsTest {
             runTest("compiler/fir/resolve/testData/resolve/expresssions/objects.kt");
         }
 
+        @TestMetadata("outerMemberAccesses.kt")
+        public void testOuterMemberAccesses() throws Exception {
+            runTest("compiler/fir/resolve/testData/resolve/expresssions/outerMemberAccesses.kt");
+        }
+
         @TestMetadata("outerObject.kt")
         public void testOuterObject() throws Exception {
             runTest("compiler/fir/resolve/testData/resolve/expresssions/outerObject.kt");
