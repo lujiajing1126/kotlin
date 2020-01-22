@@ -430,6 +430,10 @@ class FirTowerResolver(
             is FirResolvedQualifier -> runResolverForQualifierReceiver(info, collector, receiver, manager)
             null -> runResolverForNoReceiver(info, collector, manager)
             else -> runResolverForExpressionReceiver(info, collector, receiver, manager)
+        }.apply {
+            if (implicitReceiverValues.size != this@FirTowerResolver.implicitReceiverValues.size) {
+                throw ConcurrentModificationException()
+            }
         }
     }
 
