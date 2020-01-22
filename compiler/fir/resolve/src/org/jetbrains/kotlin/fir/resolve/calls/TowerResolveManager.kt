@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.resolve.transformQualifiedAccessUsingSmartcastIn
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.firUnsafe
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.fir.types.isExtensionFunctionType
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -192,7 +193,8 @@ class TowerResolveManager internal constructor(private val towerResolver: FirNew
                             processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubProcessor)
                             processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubProcessor)
                         }
-                        if (!resultCollector.isSuccess()) {
+                        // NB: we don't perform this for implicit Unit
+                        if (!resultCollector.isSuccess() && info.explicitReceiver?.typeRef !is FirImplicitBuiltinTypeRef) {
                             processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
                             processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
                         }
