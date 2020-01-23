@@ -141,21 +141,29 @@ sealed class ImplicitReceiverValue<S : AbstractFirBasedSymbol<*>>(
     }
 }
 
-class ImplicitDispatchReceiverValue(
+internal enum class ImplicitDispatchReceiverKind {
+    REGULAR,
+    COMPANION,
+    COMPANION_FROM_SUPERTYPE
+}
+
+class ImplicitDispatchReceiverValue internal constructor(
     boundSymbol: FirClassSymbol<*>,
     type: ConeKotlinType,
     useSiteSession: FirSession,
     scopeSession: ScopeSession,
-    val companionFromSupertype: Boolean = false
+    private val kind: ImplicitDispatchReceiverKind = ImplicitDispatchReceiverKind.REGULAR
 ) : ImplicitReceiverValue<FirClassSymbol<*>>(boundSymbol, type, useSiteSession, scopeSession) {
-    constructor(boundSymbol: FirClassSymbol<*>, useSiteSession: FirSession, scopeSession: ScopeSession, companionFromSupertype: Boolean) :
-            this(
-                boundSymbol,
-                boundSymbol.constructType(typeArguments = emptyArray(), isNullable = false),
-                useSiteSession,
-                scopeSession,
-                companionFromSupertype
-            )
+    internal constructor(
+        boundSymbol: FirClassSymbol<*>, useSiteSession: FirSession, scopeSession: ScopeSession, kind: ImplicitDispatchReceiverKind
+    ) : this(
+        boundSymbol, boundSymbol.constructType(typeArguments = emptyArray(), isNullable = false),
+        useSiteSession, scopeSession, kind
+    )
+
+    val implicitCompanion: Boolean get() = kind != ImplicitDispatchReceiverKind.REGULAR
+
+    val companionFromSupertype: Boolean get() = kind == ImplicitDispatchReceiverKind.COMPANION_FROM_SUPERTYPE
 }
 
 class ImplicitExtensionReceiverValue(
