@@ -84,9 +84,11 @@ class MemberScopeTowerLevel(
     private fun <T : AbstractFirBasedSymbol<*>> processMembers(
         output: TowerScopeLevel.TowerScopeLevelProcessor<T>,
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
-    ) {
-        val scope = dispatchReceiver.scope(session, scopeSession) ?: return
+    ): ProcessorAction {
+        var empty = true
+        val scope = dispatchReceiver.scope(session, scopeSession) ?: return ProcessorAction.NONE
         scope.processScopeMembers { candidate ->
+            empty = false
             if (candidate is FirCallableSymbol<*> &&
                 (implicitExtensionInvokeMode || candidate.hasConsistentExtensionReceiver(extensionReceiver))
             ) {
@@ -117,6 +119,7 @@ class MemberScopeTowerLevel(
         withSynthetic.processScopeMembers { symbol ->
             output.consumeCandidate(symbol, NotNullableReceiverValue(dispatchReceiver), extensionReceiver as? ImplicitReceiverValue<*>)
         }
+        return if (empty) ProcessorAction.NONE else ProcessorAction.NEXT
     }
 
     override fun <T : AbstractFirBasedSymbol<*>> processElementsByName(
@@ -128,7 +131,7 @@ class MemberScopeTowerLevel(
         if (implicitExtensionInvokeMode && !isInvoke) {
             return ProcessorAction.NEXT
         }
-        when (token) {
+        return when (token) {
             TowerScopeLevel.Token.Properties -> processMembers(processor) { symbol ->
                 this.processPropertiesByName(name, symbol.cast())
             }
@@ -142,7 +145,6 @@ class MemberScopeTowerLevel(
                 this.processClassifiersByName(name, symbol.cast())
             }
         }
-        return ProcessorAction.NEXT
     }
 
     override fun replaceReceiverValue(receiverValue: ReceiverValue): SessionBasedTowerLevel {
