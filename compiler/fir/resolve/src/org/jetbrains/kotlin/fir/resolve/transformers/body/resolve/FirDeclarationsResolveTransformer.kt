@@ -15,9 +15,7 @@ import org.jetbrains.kotlin.fir.diagnostics.FirSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
-import org.jetbrains.kotlin.fir.resolve.calls.ImplicitExtensionReceiverValue
-import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
+import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.extractLambdaInfoFromFunctionalType
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.*
@@ -500,14 +498,14 @@ class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransformer) 
                 // Questionable: performance
                 (owner as? FirRegularClass)?.companionObject?.let { companion ->
                     implicitCompanionValues += ImplicitDispatchReceiverValue(
-                        companion.symbol, session, scopeSession, companionFromSupertype = false
+                        companion.symbol, session, scopeSession, kind = ImplicitDispatchReceiverKind.COMPANION
                     )
                 }
                 lookupSuperTypes(owner, lookupInterfaces = false, deep = true, useSiteSession = session).mapNotNull {
                     val superClass = (it as? ConeClassLikeType)?.lookupTag?.toSymbol(session)?.fir as? FirRegularClass
                     superClass?.companionObject?.let { companion ->
                         implicitCompanionValues += ImplicitDispatchReceiverValue(
-                            companion.symbol, session, scopeSession, companionFromSupertype = true
+                            companion.symbol, session, scopeSession, kind = ImplicitDispatchReceiverKind.COMPANION_FROM_SUPERTYPE
                         )
                     }
                 }
