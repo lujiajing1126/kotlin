@@ -103,7 +103,6 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
     private inner class LevelHandler(
         val info: CallInfo,
         val explicitReceiverKind: ExplicitReceiverKind,
-        val resultCollector: CandidateCollector,
         val group: TowerGroup
     ) {
         private fun createExplicitReceiverForInvoke(candidate: Candidate): FirQualifiedAccessExpressionImpl {
@@ -274,7 +273,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
             "Incorrect TowerGroup processing order (c) Mikhail Glukhikh"
         }
         this.group = group
-        val result = with(LevelHandler(callInfo, explicitReceiverKind, resultCollector, group)) {
+        val result = with(LevelHandler(callInfo, explicitReceiverKind, group)) {
             towerLevel.handleLevel()
         }
         processQueuedLevelsForInvoke()
@@ -299,7 +298,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
                 break
             }
             val query = queue.poll()
-            with(LevelHandler(query.callInfo, query.explicitReceiverKind, resultCollector, query.group)) {
+            with(LevelHandler(query.callInfo, query.explicitReceiverKind, query.group)) {
                 query.towerLevel.handleLevel(invokeResolveMode = query.mode)
             }
         }
