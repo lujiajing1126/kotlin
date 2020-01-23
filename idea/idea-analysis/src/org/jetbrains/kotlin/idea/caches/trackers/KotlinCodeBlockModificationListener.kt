@@ -91,15 +91,19 @@ class KotlinCodeBlockModificationListener(
 
                 val changedElements = changeSet.changedElements
 
-                // ignore formatting (whitespaces etc)
-                if (changedElements.isNotEmpty() && (isFormattingChange(changeSet) || isCommentChange(changeSet))) return
+                // skip change if it contains only virtual/fake change
+                if (changedElements.isNotEmpty()) {
+                    // ignore formatting (whitespaces etc)
+                    if (isFormattingChange(changeSet) || isCommentChange(changeSet)) return
+                }
 
                 val inBlockElements = inBlockModifications(changedElements)
 
+                val physical = ktFile.isPhysical
                 if (inBlockElements.isEmpty()) {
                     messageBusConnection.deliverImmediately()
 
-                    if (ktFile.isPhysical && !isReplLine(ktFile.virtualFile)) {
+                    if (physical && !isReplLine(ktFile.virtualFile)) {
                         if (isLanguageTrackerEnabled) {
                             kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
                             perModuleOutOfCodeBlockTrackerUpdater.onKotlinPhysicalFileOutOfBlockChange(ktFile, true)
@@ -111,7 +115,7 @@ class KotlinCodeBlockModificationListener(
                     }
 
                     ktFile.incOutOfBlockModificationCount()
-                } else if (ktFile.isPhysical) {
+                } else if (physical) {
                     inBlockElements.forEach { it.containingKtFile.addInBlockModifiedItem(it) }
                 }
             }
@@ -172,11 +176,7 @@ class KotlinCodeBlockModificationListener(
             // contents to be replaced, which is represented in a POM event as an empty list of changed elements
 
             return elements.mapNotNull { element ->
-                // skip fake PSI elements like `IntellijIdeaRulezzz$`
-                val psi = element.psi
-                if (!psi.isPhysical && !psi.containingFile.isPhysical) return@mapNotNull null
-
-                val modificationScope = getInsideCodeBlockModificationScope(psi) ?: return emptyList()
+                val modificationScope = getInsideCodeBlockModificationScope(element.psi) ?: return emptyList()
                 modificationScope.blockDeclaration
             }
         }

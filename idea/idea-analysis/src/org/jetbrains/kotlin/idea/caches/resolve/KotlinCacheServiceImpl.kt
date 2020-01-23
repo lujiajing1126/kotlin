@@ -254,9 +254,9 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val settings = specialModuleInfo.platformSettings(specialModuleInfo.platform ?: targetPlatform)
 
         // Dummy files created e.g. by J2K do not receive events.
-        val dependencyTrackersForSyntheticFileCache = if (files.all { it.originalFile != it }) {
-            listOf(ModificationTracker { files.sumByLong { it.outOfBlockModificationCount } })
-        } else listOf(ModificationTracker { files.sumByLong { it.modificationStamp } })
+        val dependencyTrackerForSyntheticFileCache = if (files.all { it.originalFile != it }) {
+            ModificationTracker { files.sumByLong { it.outOfBlockModificationCount } }
+        } else ModificationTracker { files.sumByLong { it.modificationStamp } }
 
         val resolverDebugName =
             "$resolverForSpecialInfoName $specialModuleInfo for files ${files.joinToString { it.name }} for platform $targetPlatform"
@@ -277,7 +277,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 syntheticFiles = files,
                 reuseDataFrom = reuseDataFrom,
                 moduleFilter = moduleFilter,
-                dependencies = dependencyTrackersForSyntheticFileCache,
+                dependencies = listOf(dependencyTrackerForSyntheticFileCache),
                 invalidateOnOOCB = true,
                 allModules = allModules
             )
