@@ -132,6 +132,7 @@ class FirTowerResolver(
             }
         }
         val nonEmptyLocalScopes = mutableListOf<FirLocalScope>()
+        val emptyTopLevelScopes = mutableSetOf<FirScope>()
         for ((index, localScope) in localScopes.withIndex()) {
             val result = manager.processLevel(
                 ScopeTowerLevel(session, components, localScope), info, TowerGroup.Local(index)
@@ -177,12 +178,16 @@ class FirTowerResolver(
                     }
                 }
                 for ((topIndex, topLevelScope) in topLevelScopes.withIndex()) {
-                    manager.processLevel(
+                    if (topLevelScope in emptyTopLevelScopes) continue
+                    val result = manager.processLevel(
                         ScopeTowerLevel(
                             session, components, topLevelScope, extensionReceiver = implicitReceiverValue
                         ), info, parentGroup.Top(topIndex)
                     )
                     if (collector.isSuccess()) return collector
+                    if (result == ProcessorAction.NONE) {
+                        emptyTopLevelScopes += topLevelScope
+                    }
                 }
             }
 
@@ -201,6 +206,7 @@ class FirTowerResolver(
         }
 
         for ((index, topLevelScope) in topLevelScopes.withIndex()) {
+            if (topLevelScope in emptyTopLevelScopes) continue
             manager.processLevel(
                 ScopeTowerLevel(session, components, topLevelScope), info, TowerGroup.Top(index)
             )
