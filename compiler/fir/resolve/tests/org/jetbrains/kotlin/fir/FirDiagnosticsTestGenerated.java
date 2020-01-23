@@ -434,6 +434,11 @@ public class FirDiagnosticsTestGenerated extends AbstractFirDiagnosticsTest {
             runTest("compiler/fir/resolve/testData/resolve/expresssions/checkArguments.kt");
         }
 
+        @TestMetadata("classifierAccessFromCompanion.kt")
+        public void testClassifierAccessFromCompanion() throws Exception {
+            runTest("compiler/fir/resolve/testData/resolve/expresssions/classifierAccessFromCompanion.kt");
+        }
+
         @TestMetadata("companion.kt")
         public void testCompanion() throws Exception {
             runTest("compiler/fir/resolve/testData/resolve/expresssions/companion.kt");
