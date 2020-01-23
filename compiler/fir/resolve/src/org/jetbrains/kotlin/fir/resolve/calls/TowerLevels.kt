@@ -179,9 +179,11 @@ class ScopeTowerLevel(
         name: Name,
         processor: TowerScopeLevel.TowerScopeLevelProcessor<T>
     ): ProcessorAction {
+        var empty = true
         @Suppress("UNCHECKED_CAST")
         when (token) {
             TowerScopeLevel.Token.Properties -> scope.processPropertiesByName(name) { candidate ->
+                empty = false
                 if (candidate.hasConsistentReceivers(extensionReceiver)) {
                     processor.consumeCandidate(
                         candidate as T, dispatchReceiverValue = null,
@@ -195,6 +197,7 @@ class ScopeTowerLevel(
                 bodyResolveComponents,
                 noInnerConstructors = scope is FirQualifierScope
             ) { candidate ->
+                empty = false
                 if (candidate.hasConsistentReceivers(extensionReceiver)) {
                     processor.consumeCandidate(
                         candidate as T, dispatchReceiverValue = null,
@@ -203,13 +206,14 @@ class ScopeTowerLevel(
                 }
             }
             TowerScopeLevel.Token.Objects -> scope.processClassifiersByName(name) {
+                empty = false
                 processor.consumeCandidate(
                     it as T, dispatchReceiverValue = null,
                     implicitExtensionReceiverValue = null
                 )
             }
         }
-        return ProcessorAction.NEXT
+        return if (empty) ProcessorAction.NONE else ProcessorAction.NEXT
     }
 }
 

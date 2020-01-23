@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirQualifiedAccessExpressionImp
 import org.jetbrains.kotlin.fir.resolve.constructClassType
 import org.jetbrains.kotlin.fir.resolve.transformQualifiedAccessUsingSmartcastInfo
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.firUnsafe
+import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -118,7 +119,8 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
             }
         }
 
-        fun SessionBasedTowerLevel.handleLevel(invokeResolveMode: InvokeResolveMode? = null): LevelHandler {
+        fun SessionBasedTowerLevel.handleLevel(invokeResolveMode: InvokeResolveMode? = null): ProcessorAction {
+            var result = ProcessorAction.NONE
             val processor =
                 TowerScopeLevelProcessor(
                     info.explicitReceiver,
@@ -132,24 +134,24 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
                 )
             when (info.callKind) {
                 CallKind.VariableAccess -> {
-                    processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
+                    result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
                     // TODO: more accurate condition, or process properties/object in some other way
                     if (!resultCollector.isSuccess() &&
                         (this !is ScopeTowerLevel || this.extensionReceiver !is AbstractExplicitReceiver<*>)
                     ) {
-                        processElementsByName(TowerScopeLevel.Token.Objects, info.name, processor)
+                        result += processElementsByName(TowerScopeLevel.Token.Objects, info.name, processor)
                     }
                 }
                 CallKind.Function -> {
                     val invokeBuiltinExtensionMode =
                         invokeResolveMode == InvokeResolveMode.RECEIVER_FOR_INVOKE_BUILTIN_EXTENSION
                     if (!invokeBuiltinExtensionMode) {
-                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
+                        result += processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
                     }
                     if (invokeResolveMode == InvokeResolveMode.IMPLICIT_CALL_ON_GIVEN_RECEIVER ||
                         resultCollector.isSuccess()
                     ) {
-                        return this@LevelHandler
+                        return result
                     }
 
                     val invokeReceiverProcessor = TowerScopeLevelProcessor(
@@ -161,7 +163,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
                         group
                     )
                     invokeReceiverCollector.newDataSet()
-                    processElementsByName(TowerScopeLevel.Token.Properties, info.name, invokeReceiverProcessor)
+                    result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, invokeReceiverProcessor)
 
                     if (invokeReceiverCollector.isSuccess()) {
                         for (invokeReceiverCandidate in invokeReceiverCollector.bestCandidates()) {
@@ -236,24 +238,24 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
                         )
                         val towerLevelWithStubReceiver = replaceReceiverValue(stubReceiverValue)
                         with(towerLevelWithStubReceiver) {
-                            processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubProcessor)
-                            processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubProcessor)
+                            result += processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubProcessor)
+                            result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubProcessor)
                         }
                         // NB: we don't perform this for implicit Unit
                         if (!resultCollector.isSuccess() && info.explicitReceiver?.typeRef !is FirImplicitBuiltinTypeRef) {
-                            processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
-                            processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
+                            result += processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
+                            result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
                         }
                     } else {
-                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
-                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
+                        result += processElementsByName(TowerScopeLevel.Token.Functions, info.name, processor)
+                        result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
                     }
                 }
                 else -> {
                     throw AssertionError("Unsupported call kind in tower resolver: ${info.callKind}")
                 }
             }
-            return this@LevelHandler
+            return result
         }
     }
 
@@ -267,15 +269,16 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
         callInfo: CallInfo,
         group: TowerGroup,
         explicitReceiverKind: ExplicitReceiverKind = ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
-    ) {
+    ): ProcessorAction {
         assert(group > this.group) {
             "Incorrect TowerGroup processing order (c) Mikhail Glukhikh"
         }
         this.group = group
-        with(LevelHandler(callInfo, explicitReceiverKind, resultCollector, group)) {
+        val result = with(LevelHandler(callInfo, explicitReceiverKind, resultCollector, group)) {
             towerLevel.handleLevel()
         }
         processQueuedLevelsForInvoke()
+        return result
     }
 
     fun enqueueLevelForInvoke(

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
+import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.FirExplicitSimpleImportingScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirStaticScope
@@ -130,11 +131,15 @@ class FirTowerResolver(
                 }
             }
         }
+        val nonEmptyLocalScopes = mutableListOf<FirLocalScope>()
         for ((index, localScope) in localScopes.withIndex()) {
-            manager.processLevel(
+            val result = manager.processLevel(
                 ScopeTowerLevel(session, components, localScope), info, TowerGroup.Local(index)
             )
             if (collector.isSuccess()) return collector
+            if (result != ProcessorAction.NONE) {
+                nonEmptyLocalScopes += localScope
+            }
         }
         for ((implicitReceiverValue, usableAsValue, depth) in implicitReceivers) {
             // NB: companions are processed via implicitReceiverValues!
@@ -147,7 +152,7 @@ class FirTowerResolver(
                     ), info, parentGroup.Member
                 )
                 if (collector.isSuccess()) return collector
-                for ((localIndex, localScope) in localScopes.withIndex()) {
+                for ((localIndex, localScope) in nonEmptyLocalScopes.withIndex()) {
                     manager.processLevel(
                         ScopeTowerLevel(
                             session, components, localScope, extensionReceiver = implicitReceiverValue
@@ -242,17 +247,21 @@ class FirTowerResolver(
             return collector
         }
 
+        val nonEmptyLocalScopes = mutableListOf<FirLocalScope>()
         for ((index, localScope) in localScopes.withIndex()) {
             manager.enqueueLevelForInvoke(
                 ScopeTowerLevel(session, components, localScope), info, TowerGroup.Local(index),
                 InvokeResolveMode.RECEIVER_FOR_INVOKE_BUILTIN_EXTENSION
             )
-            manager.processLevel(
+            val result = manager.processLevel(
                 ScopeTowerLevel(
                     session, components, localScope, extensionReceiver = explicitReceiverValue
                 ), info, TowerGroup.Local(index), ExplicitReceiverKind.EXTENSION_RECEIVER
             )
             if (collector.isSuccess()) return collector
+            if (result != ProcessorAction.NONE) {
+                nonEmptyLocalScopes += localScope
+            }
         }
         for ((implicitReceiverValue, usableAsValue, depth) in implicitReceivers) {
             if (!usableAsValue) continue
@@ -271,7 +280,7 @@ class FirTowerResolver(
                 ), info, parentGroup.Member, ExplicitReceiverKind.EXTENSION_RECEIVER
             )
             if (collector.isSuccess()) return collector
-            for ((localIndex, localScope) in localScopes.withIndex()) {
+            for ((localIndex, localScope) in nonEmptyLocalScopes.withIndex()) {
                 manager.enqueueLevelForInvoke(
                     ScopeTowerLevel(
                         session, components, localScope, extensionReceiver = implicitReceiverValue
