@@ -5,6 +5,8 @@
 
 package kotlin.script.experimental.jvmhost.repl
 
+import com.intellij.openapi.Disposable
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerImpl
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.JvmReplCompilerState
@@ -26,6 +28,19 @@ class JvmReplCompiler(
         hostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration)
     )
 ) : ReplCompiler {
+
+    constructor(
+        scriptCompilationConfiguration: ScriptCompilationConfiguration,
+        hostConfiguration: ScriptingHostConfiguration,
+        parentMessageCollector: MessageCollector?,
+        disposable: Disposable?
+    ) : this(
+        scriptCompilationConfiguration, hostConfiguration,
+        KJvmReplCompilerImpl(
+            hostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration),
+            parentMessageCollector, disposable
+        )
+    )
 
     override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = JvmReplCompilerState(replCompilerProxy, lock)
 
