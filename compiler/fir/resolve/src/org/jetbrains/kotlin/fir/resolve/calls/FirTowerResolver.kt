@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.impl.FirImportImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedImportImpl
+import org.jetbrains.kotlin.fir.declarations.isCompanion
 import org.jetbrains.kotlin.fir.declarations.isInner
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.FirExplicitSimpleImportingScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirStaticScope
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
@@ -38,32 +40,41 @@ class FirTowerResolver(
     private val session: FirSession get() = components.session
     private val collector = CandidateCollector(components, resolutionStageRunner)
     private val manager = TowerResolveManager(this)
-    private lateinit var implicitReceiverValues: List<ImplicitReceiverValue<*>>
+    private lateinit var implicitReceivers: List<ImplicitReceiver>
 
     private data class ImplicitReceiver(val receiver: ImplicitReceiverValue<*>, val usableAsValue: Boolean, val depth: Int)
 
-    private val implicitReceivers: Sequence<ImplicitReceiver>
-        get() {
-            var depth = 0
-            var firstDispatchValue = true
-            return implicitReceiverValues.asSequence().map {
-                val usableAsValue = when (it) {
-                    is ImplicitExtensionReceiverValue -> true
-                    is ImplicitDispatchReceiverValue -> if (firstDispatchValue) {
+    private fun prepareImplicitReceivers(implicitReceiverValues: List<ImplicitReceiverValue<*>>): List<ImplicitReceiver> {
+        var depth = 0
+        var firstDispatchValue = true
+        val explicitCompanions = mutableListOf<FirRegularClassSymbol>()
+        implicitReceivers = implicitReceiverValues.mapNotNull {
+            val usableAsValue = when (it) {
+                is ImplicitExtensionReceiverValue -> true
+                is ImplicitDispatchReceiverValue -> {
+                    val symbol = it.boundSymbol
+                    val klass = symbol.fir as? FirRegularClass
+                    if (!it.implicitCompanion && klass?.isCompanion == true) {
+                        explicitCompanions += klass.symbol
+                    }
+                    if (firstDispatchValue) {
                         if (!it.implicitCompanion &&
-                            (it.boundSymbol.fir as? FirRegularClass)?.isInner == false &&
-                            !it.boundSymbol.classId.isLocal
+                            klass?.isInner == false &&
+                            !symbol.classId.isLocal
                         ) {
                             firstDispatchValue = false
                         }
                         true
                     } else {
-                        it.boundSymbol.fir.classKind == ClassKind.OBJECT
+                        symbol.fir.classKind == ClassKind.OBJECT
                     }
                 }
-                ImplicitReceiver(it, usableAsValue, depth++)
             }
+            if (it is ImplicitDispatchReceiverValue && it.implicitCompanion && it.boundSymbol in explicitCompanions) null
+            else ImplicitReceiver(it, usableAsValue, depth++)
         }
+        return implicitReceivers
+    }
 
     private fun runResolverForQualifierReceiver(
         info: CallInfo,
@@ -426,7 +437,7 @@ class FirTowerResolver(
         manager: TowerResolveManager = this.manager
     ): CandidateCollector {
         // TODO: add flag receiver / non-receiver position
-        this.implicitReceiverValues = implicitReceiverValues
+        prepareImplicitReceivers(implicitReceiverValues)
         val candidateFactory = CandidateFactory(components, info)
         manager.candidateFactory = candidateFactory
         if (info.callKind == CallKind.CallableReference && info.stubReceiver != null) {
