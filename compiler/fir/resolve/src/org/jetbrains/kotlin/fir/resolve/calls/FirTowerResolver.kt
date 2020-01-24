@@ -208,7 +208,9 @@ class FirTowerResolver(
         }
 
         for ((index, topLevelScope) in topLevelScopes.withIndex()) {
-            if (topLevelScope in emptyTopLevelScopes) continue
+            // NB: this check does not work for variables
+            // because we do not search for objects if we have extension receiver
+            if (info.callKind != CallKind.VariableAccess && topLevelScope in emptyTopLevelScopes) continue
             manager.processLevel(
                 ScopeTowerLevel(session, components, topLevelScope), info, TowerGroup.Top(index)
             )

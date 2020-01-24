@@ -23,11 +23,11 @@ FILE: classifierAccessFromCompanion.kt
                 super<R|kotlin/Any|>()
             }
 
-            public final val f: R|kotlin/Unit| = Q|kotlin/Function|
+            public final val f: R|kotlin/Unit| = Q|Factory.Function|
                 public get(): R|kotlin/Unit|
 
-            public final val x: <ERROR TYPE REF: Unresolved name: Default> = Q|kotlin/Function|.<Unresolved name: Default>#
-                public get(): <ERROR TYPE REF: Unresolved name: Default>
+            public final val x: R|Factory.Function.Default| = Q|Factory.Function.Default|
+                public get(): R|Factory.Function.Default|
 
         }
 

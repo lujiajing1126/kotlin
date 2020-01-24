@@ -136,7 +136,7 @@ class TowerResolveManager internal constructor(private val towerResolver: FirTow
                     result += processElementsByName(TowerScopeLevel.Token.Properties, info.name, processor)
                     // TODO: more accurate condition, or process properties/object in some other way
                     if (!resultCollector.isSuccess() &&
-                        (this !is ScopeTowerLevel || this.extensionReceiver !is AbstractExplicitReceiver<*>)
+                        (this !is ScopeTowerLevel || this.extensionReceiver == null)
                     ) {
                         result += processElementsByName(TowerScopeLevel.Token.Objects, info.name, processor)
                     }

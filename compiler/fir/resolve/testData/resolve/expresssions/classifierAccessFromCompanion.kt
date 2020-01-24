@@ -5,6 +5,6 @@ class Factory {
 
     companion object {
         val f = Function
-        val x = Function.<!UNRESOLVED_REFERENCE!>Default<!>
+        val x = Function.Default
     }
 }
