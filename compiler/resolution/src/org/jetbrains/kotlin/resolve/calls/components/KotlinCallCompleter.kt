@@ -17,14 +17,9 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage.Empt
 import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.tower.forceResolution
-import org.jetbrains.kotlin.resolve.descriptorUtil.hasExactAnnotation
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.UnwrappedType
-import org.jetbrains.kotlin.types.model.TypeSystemInferenceExtensionContext
-import org.jetbrains.kotlin.types.model.isIntegerLiteralTypeConstructor
-import org.jetbrains.kotlin.types.model.typeConstructor
-import org.jetbrains.kotlin.types.typeUtil.contains
 
 class KotlinCallCompleter(
     private val postponedArgumentsAnalyzer: PostponedArgumentsAnalyzer,
@@ -51,14 +46,17 @@ class KotlinCallCompleter(
         candidate.addExpectedTypeFromCastConstraint(returnType, resolutionCallbacks)
         candidate.checkSamWithVararg(diagnosticHolder)
 
-        return if (resolutionCallbacks.inferenceSession.shouldRunCompletion(candidate))
-            candidate.runCompletion(
-                CompletionModeCalculator.computeCompletionMode(candidate, expectedType, returnType, trivialConstraintTypeInferenceOracle),
-                diagnosticHolder,
-                resolutionCallbacks
+        val completionMode: ConstraintSystemCompletionMode
+        if (resolutionCallbacks.inferenceSession.shouldRunCompletion(candidate)) {
+            completionMode = CompletionModeCalculator.computeCompletionMode(
+                candidate, expectedType, returnType, trivialConstraintTypeInferenceOracle
             )
-        else
-            candidate.asCallResolutionResult(ConstraintSystemCompletionMode.PARTIAL, diagnosticHolder)
+            runCompletion(candidate.resolvedCall, completionMode, diagnosticHolder, candidate.getSystem(), resolutionCallbacks)
+        } else {
+            completionMode = ConstraintSystemCompletionMode.PARTIAL
+        }
+
+        return candidate.asCallResolutionResult(completionMode, diagnosticHolder)
     }
 
     private fun KotlinResolutionCandidate.checkSamWithVararg(diagnosticHolder: KotlinDiagnosticsHolder.SimpleHolder) {
@@ -101,21 +99,6 @@ class KotlinCallCompleter(
             CandidateWithDiagnostics(candidate, diagnosticsHolder.getDiagnostics() + candidate.diagnosticsFromResolutionParts)
         }
         return AllCandidatesResolutionResult(completedCandidates)
-    }
-
-    private fun KotlinResolutionCandidate.runCompletion(
-        completionType: ConstraintSystemCompletionMode,
-        diagnosticHolder: KotlinDiagnosticsHolder.SimpleHolder,
-        resolutionCallbacks: KotlinResolutionCallbacks
-    ): CallResolutionResult {
-        if (isErrorCandidate()) {
-            runCompletion(resolvedCall, ConstraintSystemCompletionMode.FULL, diagnosticHolder, getSystem(), resolutionCallbacks)
-            return asCallResolutionResult(completionType, diagnosticHolder)
-        }
-
-        runCompletion(resolvedCall, completionType, diagnosticHolder, getSystem(), resolutionCallbacks)
-
-        return asCallResolutionResult(completionType, diagnosticHolder)
     }
 
     private fun runCompletion(
@@ -225,8 +208,8 @@ class KotlinCallCompleter(
             PartialCallResolutionResult(resolvedCall, allDiagnostics, systemStorage)
         }
     }
+}
 
-    private fun KotlinResolutionCandidate.isErrorCandidate(): Boolean {
-        return ErrorUtils.isError(resolvedCall.candidateDescriptor) || hasContradiction
-    }
+internal fun KotlinResolutionCandidate.isErrorCandidate(): Boolean {
+    return ErrorUtils.isError(resolvedCall.candidateDescriptor) || hasContradiction
 }
