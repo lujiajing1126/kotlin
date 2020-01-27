@@ -448,15 +448,6 @@ class CompileKotlinAgainstCustomBinariesTest : AbstractKotlinCompilerIntegration
         compileKotlin("main.kt", tmpdir, listOf(library))
     }
 
-    fun testTypeAliasesAreInvisibleInCompatibilityMode() {
-        val library = compileLibrary("library")
-        // -Xskip-metadata-version-check because if master is pre-release, an extra error will be reported when compiling with LV 1.0
-        // against a library compiled by a pre-release compiler
-        compileKotlin(
-            "main.kt", tmpdir, listOf(library), K2JVMCompiler(), listOf("-language-version", "1.0", "-Xskip-metadata-version-check")
-        )
-    }
-
     fun testInnerClassPackageConflict() {
         val output = compileLibrary("library", destination = File(tmpdir, "library"))
         File(testDataDirectory, "library/test/Foo/x.txt").copyTo(File(output, "test/Foo/x.txt"))
@@ -501,36 +492,6 @@ class CompileKotlinAgainstCustomBinariesTest : AbstractKotlinCompilerIntegration
             additionalOptions = listOf("-XXLanguage:+ProperInlineFromHigherPlatformDiagnostic"),
             expectedFileName = "properError.txt"
         )
-    }
-
-    fun testObsoleteInlineSuspend() {
-        val version = intArrayOf(1, 0, 1) // legacy coroutines metadata
-        val options = listOf("-language-version", "1.2", "-Xcoroutines=enable")
-        val library = transformJar(
-            compileLibrary("library", additionalOptions = options),
-            { _, bytes ->
-                val (resultBytes, removedCounter) = stripSuspensionMarksToImitateLegacyCompiler(
-                    WrongBytecodeVersionTest.transformMetadataInClassFile(bytes) { name, _ ->
-                        if (name == JvmAnnotationNames.BYTECODE_VERSION_FIELD_NAME) version else null
-                    })
-                // we expect 4 instructions to be removed in this test library
-                assertEquals(4, removedCounter)
-                resultBytes
-            })
-        compileKotlin(
-            "source.kt", tmpdir, listOf(library), K2JVMCompiler(),
-            additionalOptions = options
-        )
-        val classLoader = URLClassLoader(
-            arrayOf(library.toURI().toURL(), tmpdir.toURI().toURL()),
-            ForTestCompileRuntime.runtimeJarClassLoader()
-        )
-        @Suppress("UNCHECKED_CAST")
-        val result = classLoader
-            .loadClass("SourceKt")
-            .getDeclaredMethod("run")
-            .invoke(null) as Array<String>
-        assertEquals(result[0], result[1])
     }
 
     fun testInlineFunctionsWithMatchingJvmSignatures() {
