@@ -287,6 +287,10 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
     @Override
     @NotNull
     public List<TypeParameterDescriptor> getTypeParameters() {
+        if (typeParameters == null) {
+            // for EA-141456 to check on which class `initialize` was not called
+            throw new IllegalStateException("typeParameters field of " + getClass().getName() + " should not be null");
+        }
         return typeParameters;
     }
 
