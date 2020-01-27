@@ -203,7 +203,9 @@ fun loadIr(
         }
         is MainModule.Klib -> {
             val moduleDescriptor = depsDescriptors.getModuleDescriptor(mainModule.lib)
-            val symbolTable = SymbolTable()
+            val mangler = JsManglerDesc
+            val signaturer = IdSignatureDescriptor(mangler)
+            val symbolTable = SymbolTable(signaturer)
             val constantValueGenerator = ConstantValueGenerator(moduleDescriptor, symbolTable)
             val typeTranslator = TypeTranslator(
                 symbolTable,
@@ -212,8 +214,8 @@ fun loadIr(
             )
             typeTranslator.constantValueGenerator = constantValueGenerator
             constantValueGenerator.typeTranslator = typeTranslator
-            val irBuiltIns = IrBuiltIns(moduleDescriptor.builtIns, typeTranslator, symbolTable)
-            val deserializer = JsIrLinker(moduleDescriptor, JsMangler, emptyLoggingContext, irBuiltIns, symbolTable)
+            val irBuiltIns = IrBuiltIns(moduleDescriptor.builtIns, typeTranslator, signaturer, symbolTable)
+            val deserializer = JsIrLinker(emptyLoggingContext, irBuiltIns, symbolTable)
 
             val deserializedModuleFragments = sortDependencies(allDependencies.getFullList(), depsDescriptors.descriptors).map {
                 val strategy =
@@ -237,14 +239,17 @@ fun loadIr(
 
 private fun runAnalysisAndPreparePsi2Ir(depsDescriptors: ModulesStructure): GeneratorContext {
     val analysisResult = depsDescriptors.runAnalysis()
+    val mangler = JsManglerDesc
+    val signaturer = IdSignatureDescriptor(mangler)
 
     return GeneratorContext(
         Psi2IrConfiguration(),
         analysisResult.moduleDescriptor,
         analysisResult.bindingContext,
         depsDescriptors.compilerConfiguration.languageVersionSettings,
-        SymbolTable(),
-        JsGeneratorExtensions()
+        SymbolTable(signaturer),
+        GeneratorExtensions(),
+        signaturer
     )
 }
 
@@ -255,7 +260,8 @@ fun GeneratorContext.generateModuleFragmentWithPlugins(
     expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>? = null
 ): IrModuleFragment {
     val irProviders = generateTypicalIrProviderList(moduleDescriptor, irBuiltIns, symbolTable, deserializer)
-    val psi2Ir = Psi2IrTranslator(languageVersionSettings, configuration, mangler = JsMangler)
+    val signaturer = IdSignatureDescriptor(JsManglerDesc)
+    val psi2Ir = Psi2IrTranslator(languageVersionSettings, configuration, signaturer)
 
     for (extension in IrGenerationExtension.getInstances(project)) {
         psi2Ir.addPostprocessingStep { module ->
@@ -285,8 +291,10 @@ fun GeneratorContext.generateModuleFragmentWithPlugins(
 
 fun GeneratorContext.generateModuleFragment(files: List<KtFile>, deserializer: IrDeserializer? = null, expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>? = null): IrModuleFragment {
     val irProviders = generateTypicalIrProviderList(moduleDescriptor, irBuiltIns, symbolTable, deserializer)
+    val mangler = JsManglerDesc
+    val signaturer = IdSignatureDescriptor(mangler)
     return Psi2IrTranslator(
-        languageVersionSettings, configuration, mangler = JsMangler
+        languageVersionSettings, configuration, signaturer
     ).generateModuleFragment(this, files, irProviders, expectDescriptorToSymbol)
 }
 
