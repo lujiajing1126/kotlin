@@ -56,11 +56,11 @@ fun test() {
     C.field
     D.field
 
-    E.<!AMBIGUITY!>field<!>
-    O.<!AMBIGUITY!>field<!>
+    E.field
+    O.field
 
-    EE.<!AMBIGUITY!>field<!>
-    EO.<!AMBIGUITY!>field<!>
+    EE.field
+    EO.field
 
-    OO.<!AMBIGUITY!>field<!>
+    OO.field
 }

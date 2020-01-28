@@ -97,7 +97,9 @@ class JavaScopeProvider(
         useSiteSession: FirSession,
         scopeSession: ScopeSession
     ): FirScope? {
-        return FirStaticScope(getUseSiteMemberScope(klass, useSiteSession, scopeSession))
+        return FirStaticScope(getUseSiteMemberScope(klass, useSiteSession, scopeSession)) {
+            it.callableId.classId == klass.symbol.classId
+        }
     }
 }
 
