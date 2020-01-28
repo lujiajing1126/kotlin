@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@UseExperimental(DfaInternals::class)
+@OptIn(DfaInternals::class)
 abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     protected val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents
 ) {

@@ -559,7 +559,7 @@ class LazyJavaClassMemberScope(
     private fun computeSupertypes(): Collection<KotlinType> {
         if (skipRefinement) return ownerDescriptor.typeConstructor.supertypes
 
-        @UseExperimental(TypeRefinement::class)
+        @OptIn(TypeRefinement::class)
         return c.components.kotlinTypeChecker.kotlinTypeRefiner.refineSupertypes(ownerDescriptor)
     }
 

@@ -34,7 +34,7 @@ typealias RefinedTypeFactory = (KotlinTypeRefiner) -> SimpleType?
 object KotlinTypeFactory {
     val EMPTY_REFINED_TYPE_FACTORY: RefinedTypeFactory = { _ -> null }
 
-    @UseExperimental(TypeRefinement::class)
+    @OptIn(TypeRefinement::class)
     private fun computeMemberScope(
         constructor: TypeConstructor,
         arguments: List<TypeProjection>,
@@ -61,7 +61,7 @@ object KotlinTypeFactory {
 
     @JvmStatic
     @JvmOverloads
-    @UseExperimental(TypeRefinement::class)
+    @OptIn(TypeRefinement::class)
     fun simpleType(
         annotations: Annotations,
         constructor: TypeConstructor,
@@ -111,7 +111,7 @@ object KotlinTypeFactory {
     private class ExpandedTypeOrRefinedConstructor(val expandedType: SimpleType?, val refinedConstructor: TypeConstructor?)
 
     @JvmStatic
-    @UseExperimental(TypeRefinement::class)
+    @OptIn(TypeRefinement::class)
     fun simpleTypeWithNonTrivialMemberScope(
         annotations: Annotations,
         constructor: TypeConstructor,
