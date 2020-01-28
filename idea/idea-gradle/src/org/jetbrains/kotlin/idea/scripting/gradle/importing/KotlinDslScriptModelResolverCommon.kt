@@ -22,9 +22,22 @@ abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExten
         return setOf(KotlinDslScriptModelBuilderService::class.java)
     }
 
-    @Suppress("unused")
-    protected fun KotlinDslScriptsModel.toListOfScriptModels(): List<KotlinDslScriptModel> =
-        scriptModels.map { (file, model) ->
+    protected fun processScriptModel(
+        ideProject: DataNode<ProjectData>,
+        model: KotlinDslScriptsModel,
+        projectName: String
+    ) {
+        if (model is BrokenKotlinDslScriptsModel) {
+            LOG.error(
+                "Couldn't get KotlinDslScriptsModel for $projectName:\n${model.message}\n${model.stackTrace}"
+            )
+        } else {
+            ideProject.KOTLIN_DSL_SCRIPT_MODELS.addAll(model.toListOfScriptModels())
+        }
+    }
+
+    private fun KotlinDslScriptsModel.toListOfScriptModels(): List<KotlinDslScriptModel> {
+        return scriptModels.map { (file, model) ->
             val messages = mutableListOf<KotlinDslScriptModel.Message>()
 
             model.exceptions.forEach {
@@ -59,19 +72,6 @@ abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExten
                 model.implicitImports,
                 messages
             )
-        }
-
-    protected fun processScriptModel(
-        ideProject: DataNode<ProjectData>,
-        model: KotlinDslScriptsModel,
-        projectName: String
-    ) {
-        if (model is BrokenKotlinDslScriptsModel) {
-            LOG.error(
-                "Couldn't get KotlinDslScriptsModel for $projectName:\n${model.message}\n${model.stackTrace}"
-            )
-        } else {
-            ideProject.KOTLIN_DSL_SCRIPT_MODELS.addAll(model.toListOfScriptModels())
         }
     }
 }
