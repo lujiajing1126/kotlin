@@ -175,6 +175,11 @@ interface ScriptConfigurationManager {
             (getInstance(project) as AbstractScriptConfigurationManager).clearCaches()
         }
 
+        @TestOnly
+        fun hasNewRoots(project: Project): Boolean {
+            return (getInstance(project) as AbstractScriptConfigurationManager).hasNewRoots()
+        }
+
         fun clearManualConfigurationLoadingIfNeeded(file: VirtualFile) {
             if (file.LOAD_CONFIGURATION_MANUALLY == true) {
                 file.LOAD_CONFIGURATION_MANUALLY = null

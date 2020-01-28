@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.script
 
+import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 
 class ScriptConfigurationLoadingTest : AbstractScriptConfigurationLoadingTest() {
@@ -201,5 +203,15 @@ class ScriptConfigurationLoadingTest : AbstractScriptConfigurationLoadingTest() 
         assertAndApplySuggestedConfiguration()
         assertAppliedConfiguration("A")
         assertReports("A")
+    }
+
+    fun testRootsStorage() {
+        assertAndLoadInitialConfiguration()
+
+        ProjectManager.getInstance().closeProject(project)
+        ProjectManager.getInstance().loadAndOpenProject(project.projectFilePath!!)
+
+        assertAppliedConfiguration("initial")
+        assertFalse(ScriptConfigurationManager.hasNewRoots(project))
     }
 }

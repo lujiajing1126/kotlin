@@ -208,7 +208,7 @@ internal abstract class AbstractScriptConfigurationManager(
         debug(file) { "configuration changed = $newConfiguration" }
 
         if (newConfiguration != null) {
-            if (hasNotCachedRoots(newConfiguration)) {
+            if (rootsIndexer.noNewRoots() && hasNotCachedRoots(newConfiguration)) {
                 rootsIndexer.markNewRoot(file, newConfiguration)
             }
 
@@ -259,6 +259,11 @@ internal abstract class AbstractScriptConfigurationManager(
     @TestOnly
     internal fun clearCaches() {
         cache.clear()
+    }
+
+    @TestOnly
+    internal fun hasNewRoots(): Boolean {
+        return !rootsIndexer.noNewRoots()
     }
 
     private fun updateHighlighting(files: List<VirtualFile>) {
