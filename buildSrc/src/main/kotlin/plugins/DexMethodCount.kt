@@ -21,9 +21,11 @@ open class DexMethodCount : DefaultTask() {
 
     init {
         outputs.upToDateWhen { !shouldPrintTeamCityStatistics } // always execute when teamCityStatistics output is required
+        outputs.cacheIf { true }
     }
 
     @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
     lateinit var jarFile: File
 
     @Input
