@@ -69,9 +69,7 @@ class NonCachingLazyStorage<K, V>(
     }
 
     override fun append(key: K, value: V) {
-//        getStorageOrCreateNew().appendDataWithoutCache(key, value)
-        // TODO
-        getStorageOrCreateNew().put(key, value)
+        getStorageOrCreateNew().appendData(key) { dataOutput -> valueExternalizer.save(dataOutput, value) }
     }
 
     @Synchronized
