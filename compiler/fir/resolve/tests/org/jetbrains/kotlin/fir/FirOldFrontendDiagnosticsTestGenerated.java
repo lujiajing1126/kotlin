@@ -10136,6 +10136,11 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirOldFronte
             runTest("compiler/testData/diagnostics/tests/inference/reportAboutUnresolvedReferenceAsUnresolved.kt");
         }
 
+        @TestMetadata("resolveWithUnknownLambdaParameterType.kt")
+        public void testResolveWithUnknownLambdaParameterType() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/inference/resolveWithUnknownLambdaParameterType.kt");
+        }
+
         @TestMetadata("starApproximation.kt")
         public void testStarApproximation() throws Exception {
             runTest("compiler/testData/diagnostics/tests/inference/starApproximation.kt");
