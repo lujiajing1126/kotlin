@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.scripting.gradle.importing
 import com.intellij.openapi.util.Pair
 import org.gradle.api.Project
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
+import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.gradle.tooling.provider.model.ToolingModelBuilder
 import org.jetbrains.kotlin.idea.scripting.gradle.kotlinDslScriptsModelImportSupported
@@ -21,12 +22,12 @@ class KotlinDslScriptModelBuilderService : ToolingModelBuilder {
             val startParameter = project.gradle.startParameter
 
             val tasks = hashSetOf<String>(*startParameter.taskNames.toTypedArray())
-            tasks.add(KotlinDslModelsParameters.PREPARATION_TASK_NAME)
+            tasks.add(PREPARATION_TASK_NAME)
             startParameter.setTaskNames(tasks)
 
             val properties = HashMap<String, String>(startParameter.systemPropertiesArgs)
-            properties["-D${KotlinDslModelsParameters.PROVIDER_MODE_SYSTEM_PROPERTY_NAME}"] =
-                KotlinDslModelsParameters.STRICT_CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
+            properties["-D$CORRELATION_ID_GRADLE_PROPERTY_NAME"] = System.nanoTime().toString()
+            properties["-D$PROVIDER_MODE_SYSTEM_PROPERTY_NAME"] = STRICT_CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
             startParameter.systemPropertiesArgs = properties
         }
         return null
