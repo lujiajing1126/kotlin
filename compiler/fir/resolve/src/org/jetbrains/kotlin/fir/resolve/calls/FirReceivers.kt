@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.references.impl.FirImplicitThisReference
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.scopes.FirScope
+import org.jetbrains.kotlin.fir.scopes.KotlinScopeProvider
 import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -88,6 +89,7 @@ class QualifierReceiver(override val explicitReceiver: FirResolvedQualifier) : A
                     val klassScope = provider.getStaticMemberScopeForCallables(klass, useSiteSession, scopeSession)
                     if (klassScope != null) {
                         result += klassScope
+                        if (provider is KotlinScopeProvider) return@run result
                         lookupSuperTypes(klass, lookupInterfaces = true, deep = true, useSiteSession = useSiteSession)
                             .forEach { useSiteSuperType ->
                                 if (useSiteSuperType is ConeClassErrorType) return@forEach
