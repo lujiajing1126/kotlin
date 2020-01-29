@@ -14,10 +14,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.name.Name
 
-class FirStaticScope(
-    private val delegateScope: FirScope,
-    private val callableFilter: (FirCallableSymbol<*>) -> Boolean = { true }
-) : FirScope() {
+class FirStaticScope(private val delegateScope: FirScope) : FirScope() {
 
     override fun processClassifiersByName(name: Name, processor: (FirClassifierSymbol<*>) -> Unit) {
         delegateScope.processClassifiersByName(name) {
@@ -30,7 +27,7 @@ class FirStaticScope(
         processor: (FirFunctionSymbol<*>) -> Unit
     ) {
         delegateScope.processFunctionsByName(name) {
-            if ((it.fir as? FirSimpleFunction)?.isStatic == true && callableFilter(it)) {
+            if ((it.fir as? FirSimpleFunction)?.isStatic == true) {
                 processor(it)
             }
         }
@@ -41,7 +38,7 @@ class FirStaticScope(
         processor: (FirCallableSymbol<*>) -> Unit
     ) {
         delegateScope.processPropertiesByName(name) {
-            if ((it.fir as? FirCallableMemberDeclaration<*>)?.isStatic == true && callableFilter(it)) {
+            if ((it.fir as? FirCallableMemberDeclaration<*>)?.isStatic == true) {
                 processor(it)
             }
         }
