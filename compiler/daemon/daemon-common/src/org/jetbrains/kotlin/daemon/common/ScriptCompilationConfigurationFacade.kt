@@ -10,15 +10,13 @@ import java.rmi.RemoteException
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.util.PropertiesCollection
 
 interface ScriptCompilationConfigurationFacade : Remote {
 
     @Throws(RemoteException::class)
-    fun refineBeforeParsing(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
-
-    @Throws(RemoteException::class)
-    fun refineOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
-
-    @Throws(RemoteException::class)
-    fun refineBeforeCompiling(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
+    fun refineConfiguration(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration>
 }

@@ -8,12 +8,12 @@ package org.jetbrains.kotlin.daemon.common
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.util.PropertiesCollection
 
 interface ScriptCompilationConfigurationFacadeAsync {
 
-    suspend fun refineBeforeParsing(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
-
-    suspend fun refineOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
-
-    suspend fun refineBeforeCompiling(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration>
+    suspend fun refineConfiguration(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration>
 }

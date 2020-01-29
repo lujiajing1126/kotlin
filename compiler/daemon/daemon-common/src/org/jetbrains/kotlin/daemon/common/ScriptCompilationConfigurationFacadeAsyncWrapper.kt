@@ -8,18 +8,17 @@ package org.jetbrains.kotlin.daemon.common
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.util.PropertiesCollection
 
 class ScriptCompilationConfigurationFacadeAsyncWrapper(val rmiScriptCompilationConfigurationFacade: ScriptCompilationConfigurationFacade) :
     ScriptCompilationConfigurationFacadeAsync {
 
-    override suspend fun refineBeforeParsing(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        rmiScriptCompilationConfigurationFacade.refineBeforeParsing(context)
+    override suspend fun refineConfiguration(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+        rmiScriptCompilationConfigurationFacade.refineConfiguration(refiningKey, context)
 
-    override suspend fun refineOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        rmiScriptCompilationConfigurationFacade.refineOnAnnotations(context)
-
-    override suspend fun refineBeforeCompiling(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        rmiScriptCompilationConfigurationFacade.refineBeforeCompiling(context)
 }
 
 fun ScriptCompilationConfigurationFacade.toClient() = ScriptCompilationConfigurationFacadeAsyncWrapper(this)

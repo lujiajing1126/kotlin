@@ -10,18 +10,17 @@ import java.io.Serializable
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.util.PropertiesCollection
 
 class ScriptCompilationConfigurationFacadeRMIWrapper(val clientSide: ScriptCompilationConfigurationFacadeAsync) :
     ScriptCompilationConfigurationFacade, Serializable {
 
-    override fun refineBeforeParsing(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        runBlocking { clientSide.refineBeforeParsing(context) }
+    override fun refineConfiguration(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+        runBlocking { clientSide.refineConfiguration(refiningKey, context) }
 
-    override fun refineOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        runBlocking { clientSide.refineOnAnnotations(context) }
-
-    override fun refineBeforeCompiling(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        runBlocking { clientSide.refineBeforeCompiling(context) }
 }
 
 fun ScriptCompilationConfigurationFacadeAsync.toRMI() = ScriptCompilationConfigurationFacadeRMIWrapper(this)
