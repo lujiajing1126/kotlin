@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedImportImpl
 import org.jetbrains.kotlin.fir.declarations.isCompanion
 import org.jetbrains.kotlin.fir.declarations.isInner
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
+import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirStaticScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
+import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.name.FqName
@@ -348,6 +351,22 @@ class FirTowerResolver(
         return collector
     }
 
+    private fun runResolverForSuperReceiver(
+        info: CallInfo,
+        collector: CandidateCollector,
+        manager: TowerResolveManager
+    ): CandidateCollector {
+        val implicitReceiver = implicitReceivers.firstOrNull { it.usableAsValue && it.receiver is ImplicitDispatchReceiverValue }
+            ?: return collector
+        manager.processLevel(
+            MemberScopeTowerLevel(
+                session, components, dispatchReceiver = implicitReceiver.receiver,
+                implicitSuperMode = true, scopeSession = components.scopeSession
+            ), info, TowerGroup.Member
+        )
+        return collector
+    }
+
     internal fun enqueueResolverForInvoke(
         info: CallInfo,
         invokeReceiverValue: ExpressionReceiverValue,
@@ -459,7 +478,15 @@ class FirTowerResolver(
         return when (val receiver = info.explicitReceiver) {
             is FirResolvedQualifier -> runResolverForQualifierReceiver(info, collector, receiver, manager)
             null -> runResolverForNoReceiver(info, collector, manager)
-            else -> runResolverForExpressionReceiver(info, collector, receiver, manager)
+            else -> {
+                if (receiver is FirQualifiedAccessExpression) {
+                    val calleeReference = receiver.calleeReference
+                    if (calleeReference is FirSuperReference && calleeReference.superTypeRef is FirImplicitTypeRef) {
+                        return runResolverForSuperReceiver(info, collector, manager)
+                    }
+                }
+                runResolverForExpressionReceiver(info, collector, receiver, manager)
+            }
         }
     }
 

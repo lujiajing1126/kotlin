@@ -44,7 +44,7 @@ class ClassDerivedFromUnresolved : Base(), Interface, Unresolved {
     super.ambiguousProp
 
     fun callsFunFromSuperInterface() {
-        super.<!UNRESOLVED_REFERENCE!>bar<!>()
+        super.bar()
     }
 
     fun callsAmbiguousSuperFun() {

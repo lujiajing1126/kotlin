@@ -8,16 +8,15 @@ package org.jetbrains.kotlin.fir.resolve.calls
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.firSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.withNullability
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.FirAbstractImportingScope
+import org.jetbrains.kotlin.fir.scopes.impl.FirClassUseSiteMemberScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirQualifierScope
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeNullability
 import org.jetbrains.kotlin.name.Name
@@ -79,14 +78,22 @@ class MemberScopeTowerLevel(
     val dispatchReceiver: ReceiverValue,
     val extensionReceiver: ReceiverValue? = null,
     val implicitExtensionInvokeMode: Boolean = false,
-    val scopeSession: ScopeSession
+    val scopeSession: ScopeSession,
+    val implicitSuperMode: Boolean = false
 ) : SessionBasedTowerLevel(session) {
     private fun <T : AbstractFirBasedSymbol<*>> processMembers(
         output: TowerScopeLevel.TowerScopeLevelProcessor<T>,
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
     ): ProcessorAction {
         var empty = true
-        val scope = dispatchReceiver.scope(session, scopeSession) ?: return ProcessorAction.NONE
+        val scope = if (!implicitSuperMode) {
+            dispatchReceiver.scope(session, scopeSession) ?: return ProcessorAction.NONE
+        } else {
+            val firClass = (dispatchReceiver.type as ConeClassLikeType).lookupTag.toSymbol(session)?.fir as? FirClass<*>
+                ?: return ProcessorAction.NONE
+            val basicScope = firClass.scopeProvider.getUseSiteMemberScope(firClass, session, scopeSession) as FirClassUseSiteMemberScope
+            basicScope.superTypesScope
+        }
         scope.processScopeMembers { candidate ->
             empty = false
             if (candidate is FirCallableSymbol<*> &&
