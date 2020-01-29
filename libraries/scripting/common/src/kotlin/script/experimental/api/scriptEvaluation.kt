@@ -126,7 +126,7 @@ fun ScriptEvaluationConfiguration.refineBeforeEvaluation(
     val hostConfiguration = get(ScriptEvaluationConfiguration.hostConfiguration)
     val baseContextData = hostConfiguration?.get(ScriptingHostConfiguration.getEvaluationContext)?.invoke(hostConfiguration)
     val actualContextData = merge(baseContextData, contextData)
-    return simpleRefineImpl(ScriptEvaluationConfiguration.refineConfigurationBeforeEvaluate) { config, refineData ->
+    return refineAll(ScriptEvaluationConfiguration.refineConfigurationBeforeEvaluate) { config, refineData ->
         refineData.handler.invoke(ScriptEvaluationConfigurationRefinementContext(script, config, actualContextData))
     }
 }

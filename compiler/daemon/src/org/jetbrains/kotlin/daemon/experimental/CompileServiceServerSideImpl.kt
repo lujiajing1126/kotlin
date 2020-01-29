@@ -10,11 +10,13 @@ package org.jetbrains.kotlin.daemon.experimental
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
+import io.ktor.network.sockets.Socket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.kotlin.cli.common.CLICompiler
+import org.jetbrains.kotlin.cli.common.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY
 import org.jetbrains.kotlin.cli.common.repl.ReplCheckResult
 import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
 import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
@@ -23,7 +25,10 @@ import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler
 import org.jetbrains.kotlin.config.Services
+import org.jetbrains.kotlin.daemon.*
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.experimental.*
+import org.jetbrains.kotlin.daemon.common.experimental.socketInfrastructure.*
 import org.jetbrains.kotlin.daemon.experimental.CompileServiceTaskScheduler.*
 import org.jetbrains.kotlin.daemon.report.experimental.CompileServicesFacadeMessageCollector
 import org.jetbrains.kotlin.daemon.report.experimental.DaemonMessageReporterAsync
@@ -38,11 +43,6 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.concurrent.schedule
-import org.jetbrains.kotlin.daemon.common.experimental.socketInfrastructure.*
-import org.jetbrains.kotlin.daemon.common.experimental.*
-import io.ktor.network.sockets.*
-import org.jetbrains.kotlin.cli.common.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY
-import org.jetbrains.kotlin.daemon.*
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
@@ -365,7 +365,8 @@ class CompileServiceServerSideImpl(
         compilationOptions: CompilationOptions,
         servicesFacade: CompilerServicesFacadeBaseAsync,
         scriptCompilationConfiguration: ScriptCompilationConfiguration,
-        hostConfiguration: ScriptingHostConfiguration
+        scriptingHostConfiguration: ScriptingHostConfiguration,
+        scriptCompilationConfigurationFacade: ScriptCompilationConfigurationFacadeAsync
     ): CompileService.CallResult<Int> = ifAlive(minAliveness = Aliveness.Alive) {
         if (compilationOptions.targetPlatform != CompileService.TargetPlatform.JVM)
             CompileService.CallResult.Error("Sorry, only JVM target platform is supported now")
@@ -375,7 +376,7 @@ class CompileServiceServerSideImpl(
                 CompileServicesFacadeMessageCollector(servicesFacade, compilationOptions)
             val repl = KotlinJvmReplServiceAsync(
                 serverSocketWithPort,
-                JvmReplCompiler(scriptCompilationConfiguration, hostConfiguration, messageCollector, disposable)
+                JvmReplCompiler(scriptCompilationConfiguration, scriptingHostConfiguration, messageCollector, disposable)
             )
             val sessionId = state.sessions.leaseSession(ClientOrSessionProxy(aliveFlagPath, repl, disposable))
 

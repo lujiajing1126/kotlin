@@ -263,7 +263,7 @@ fun ScriptCompilationConfiguration.refineBeforeParsing(
     script: SourceCode,
     collectedData: ScriptCollectedData? = null
 ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-    simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeParsing) { config, refineData ->
+    refineAll(ScriptCompilationConfiguration.refineConfigurationBeforeParsing) { config, refineData ->
         refineData.handler.invoke(ScriptConfigurationRefinementContext(script, config, collectedData))
     }
 
@@ -289,11 +289,11 @@ fun ScriptCompilationConfiguration.refineBeforeCompiling(
     script: SourceCode,
     collectedData: ScriptCollectedData? = null
 ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-    simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeCompiling) { config, refineData ->
+    refineAll(ScriptCompilationConfiguration.refineConfigurationBeforeCompiling) { config, refineData ->
         refineData.handler.invoke(ScriptConfigurationRefinementContext(script, config, collectedData))
     }
 
-internal inline fun <Configuration: PropertiesCollection, RefineData> Configuration.simpleRefineImpl(
+inline fun <Configuration: PropertiesCollection, RefineData> Configuration.refineAll(
     key: PropertiesCollection.Key<List<RefineData>>,
     refineFn: (Configuration, RefineData) -> ResultWithDiagnostics<Configuration>
 ): ResultWithDiagnostics<Configuration> = (
