@@ -71,7 +71,7 @@ open class KotlinRemoteReplCompilerClient(
             BasicCompilerServicesWithResultsFacadeServer(messageCollector, null, port),
             scriptCompilationConfiguration,
             scriptingHostConfiguration,
-            scriptCompilationConfigurationFacade ?: ScriptCompilationConfigurationFacadeServer(port)
+            scriptCompilationConfigurationFacade ?: ScriptCompilationConfigurationFacadeServer(port = port)
             ).get()
     )
 

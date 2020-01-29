@@ -65,9 +65,13 @@ import java.util.logging.Logger
 import kotlin.concurrent.read
 import kotlin.concurrent.schedule
 import kotlin.concurrent.write
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptCompilationConfigurationRefine
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
+import kotlin.script.experimental.util.PropertiesCollection
 
 const val REMOTE_STREAM_BUFFER_SIZE = 4096
 
@@ -904,6 +908,16 @@ class CompileServiceImpl(
         }
     }
 
+    private class RemoteScriptConfigurationRefine(
+        val scriptCompilationConfigurationFacade: ScriptCompilationConfigurationFacade
+    ) : ScriptCompilationConfigurationRefine {
+        override suspend fun invoke(
+            refiningKey: PropertiesCollection.Key<*>,
+            context: ScriptConfigurationRefinementContext
+        ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+            scriptCompilationConfigurationFacade.refineConfiguration(refiningKey, context)
+    }
+
     override fun leaseReplSession(
         aliveFlagPath: String?,
         compilerArguments: Array<out String>,
@@ -920,7 +934,11 @@ class CompileServiceImpl(
             val messageCollector = CompileServicesFacadeMessageCollector(servicesFacade, compilationOptions)
             val repl = KotlinJvmReplService(
                 port,
-                JvmReplCompiler(scriptCompilationConfiguration, scriptingHostConfiguration, messageCollector, disposable),
+                JvmReplCompiler(
+                    scriptCompilationConfiguration, scriptingHostConfiguration,
+                    RemoteScriptConfigurationRefine(scriptCompilationConfigurationFacade),
+                    messageCollector, disposable
+                ),
                 null
             )
             val sessionId = state.sessions.leaseSession(ClientOrSessionProxy(aliveFlagPath, repl, disposable))

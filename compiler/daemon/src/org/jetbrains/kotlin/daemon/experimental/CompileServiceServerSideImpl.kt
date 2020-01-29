@@ -43,9 +43,13 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.concurrent.schedule
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptCompilationConfigurationRefine
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
+import kotlin.script.experimental.util.PropertiesCollection
 
 // TODO: this classes should replace their non-experimental versions eventually.
 
@@ -359,6 +363,17 @@ class CompileServiceServerSideImpl(
         }
     }
 
+    private class RemoteScriptConfigurationRefine(
+        val scriptCompilationConfigurationFacade: ScriptCompilationConfigurationFacadeAsync
+    ) : ScriptCompilationConfigurationRefine {
+        override suspend fun invoke(
+            refiningKey: PropertiesCollection.Key<*>,
+            context: ScriptConfigurationRefinementContext
+        ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+            scriptCompilationConfigurationFacade.refineConfiguration(refiningKey, context)
+    }
+
+
     override suspend fun leaseReplSession(
         aliveFlagPath: String?,
         compilerArguments: Array<out String>,
@@ -376,7 +391,11 @@ class CompileServiceServerSideImpl(
                 CompileServicesFacadeMessageCollector(servicesFacade, compilationOptions)
             val repl = KotlinJvmReplServiceAsync(
                 serverSocketWithPort,
-                JvmReplCompiler(scriptCompilationConfiguration, scriptingHostConfiguration, messageCollector, disposable)
+                JvmReplCompiler(
+                    scriptCompilationConfiguration, scriptingHostConfiguration,
+                    RemoteScriptConfigurationRefine(scriptCompilationConfigurationFacade),
+                    messageCollector, disposable
+                )
             )
             val sessionId = state.sessions.leaseSession(ClientOrSessionProxy(aliveFlagPath, repl, disposable))
 

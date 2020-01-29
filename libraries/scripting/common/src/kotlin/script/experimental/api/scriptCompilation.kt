@@ -263,7 +263,7 @@ fun ScriptCompilationConfiguration.refineBeforeParsing(
     script: SourceCode,
     collectedData: ScriptCollectedData? = null
 ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-    refineAll(ScriptCompilationConfiguration.refineConfigurationBeforeParsing) { config, refineData ->
+    simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeParsing) { config, refineData ->
         refineData.handler.invoke(ScriptConfigurationRefinementContext(script, config, collectedData))
     }
 
@@ -289,11 +289,43 @@ fun ScriptCompilationConfiguration.refineBeforeCompiling(
     script: SourceCode,
     collectedData: ScriptCollectedData? = null
 ): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-    refineAll(ScriptCompilationConfiguration.refineConfigurationBeforeCompiling) { config, refineData ->
+    simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeCompiling) { config, refineData ->
         refineData.handler.invoke(ScriptConfigurationRefinementContext(script, config, collectedData))
     }
 
-inline fun <Configuration: PropertiesCollection, RefineData> Configuration.refineAll(
+interface ScriptCompilationConfigurationRefine {
+    suspend operator fun invoke(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration>
+}
+
+class DirectScriptCompilationConfigurationRefine : ScriptCompilationConfigurationRefine {
+
+    override suspend operator fun invoke(
+        refiningKey: PropertiesCollection.Key<*>,
+        context: ScriptConfigurationRefinementContext
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration> = when (refiningKey) {
+        ScriptCompilationConfiguration.refineConfigurationBeforeParsing ->
+            context.compilationConfiguration
+                .simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeParsing) { config, refineData ->
+                    refineData.handler.invoke(context)
+                }
+        ScriptCompilationConfiguration.refineConfigurationOnAnnotations ->
+            context.compilationConfiguration
+                .simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationOnAnnotations) { config, refineData ->
+                    refineData.handler.invoke(context)
+                }
+        ScriptCompilationConfiguration.refineConfigurationBeforeCompiling ->
+            context.compilationConfiguration
+                .simpleRefineImpl(ScriptCompilationConfiguration.refineConfigurationBeforeCompiling) { config, refineData ->
+                    refineData.handler.invoke(context)
+                }
+        else -> ResultWithDiagnostics.Failure("Unknown refining key $refiningKey".asErrorDiagnostics())
+    }
+}
+
+internal inline fun <Configuration: PropertiesCollection, RefineData> Configuration.simpleRefineImpl(
     key: PropertiesCollection.Key<List<RefineData>>,
     refineFn: (Configuration, RefineData) -> ResultWithDiagnostics<Configuration>
 ): ResultWithDiagnostics<Configuration> = (

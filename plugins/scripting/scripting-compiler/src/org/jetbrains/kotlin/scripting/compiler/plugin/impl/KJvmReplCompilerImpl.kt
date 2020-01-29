@@ -28,6 +28,7 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 
 class KJvmReplCompilerImpl(
     val hostConfiguration: ScriptingHostConfiguration,
+    val compilationConfigurationRefine: ScriptCompilationConfigurationRefine,
     val parentMessageCollector: MessageCollector? = null,
     val externalDisposable: Disposable? = null
 ) : KJvmReplCompilerProxy {

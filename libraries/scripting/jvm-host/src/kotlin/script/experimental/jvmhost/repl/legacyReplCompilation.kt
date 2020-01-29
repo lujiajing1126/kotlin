@@ -25,20 +25,22 @@ class JvmReplCompiler(
     val scriptCompilationConfiguration: ScriptCompilationConfiguration,
     val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
     val replCompilerProxy: KJvmReplCompilerProxy = KJvmReplCompilerImpl(
-        hostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration)
+        hostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration),
+        DirectScriptCompilationConfigurationRefine()
     )
 ) : ReplCompiler {
 
     constructor(
         scriptCompilationConfiguration: ScriptCompilationConfiguration,
         hostConfiguration: ScriptingHostConfiguration,
+        compilationConfigurationRefine: ScriptCompilationConfigurationRefine,
         parentMessageCollector: MessageCollector?,
         disposable: Disposable?
     ) : this(
         scriptCompilationConfiguration, hostConfiguration,
         KJvmReplCompilerImpl(
             hostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration),
-            parentMessageCollector, disposable
+            compilationConfigurationRefine, parentMessageCollector, disposable
         )
     )
 
