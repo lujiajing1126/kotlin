@@ -626,8 +626,12 @@ Finished executing task ':$taskName'|
         }.single()
 
     fun Project.gradleProperties(): File =
-        listOf("gradle.properties").mapNotNull {
-            File(projectDir, it).takeIf(File::exists)
+        listOf("gradle.properties").map {
+            File(projectDir, it).also { file ->
+                if (!file.exists()) {
+                    file.createNewFile()
+                }
+            }
         }.single()
 
     /**
