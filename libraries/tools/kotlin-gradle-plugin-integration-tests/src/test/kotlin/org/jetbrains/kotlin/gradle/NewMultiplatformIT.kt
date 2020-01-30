@@ -224,7 +224,11 @@ class NewMultiplatformIT : BaseGradleIT() {
                 }
             }
 
-            build("assemble", "resolveRuntimeDependencies") {
+            build(
+                "assemble",
+                "resolveRuntimeDependencies",
+                options = defaultBuildOptions().copy(jsMode = jsMode)
+            ) {
                 checkAppBuild()
                 assertTasksExecuted(":resolveRuntimeDependencies") // KT-26301
             }
