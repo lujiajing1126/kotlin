@@ -17,7 +17,7 @@ class MyMapEntry : Test.MapEntryImpl()
 
 fun test() {
     val b = MyMapEntry()
-    b.key
-    b.value
-    b.setValue(null)
+    val key = b.key
+    val value = b.value
+    b.<!INAPPLICABLE_CANDIDATE!>setValue<!>(null)
 }
