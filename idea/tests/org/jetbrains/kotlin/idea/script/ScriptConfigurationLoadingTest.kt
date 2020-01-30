@@ -208,8 +208,7 @@ class ScriptConfigurationLoadingTest : AbstractScriptConfigurationLoadingTest() 
     fun testRootsStorage() {
         assertAndLoadInitialConfiguration()
 
-        ProjectManager.getInstance().closeProject(project)
-        ProjectManager.getInstance().loadAndOpenProject(project.projectFilePath!!)
+        ProjectManager.getInstance().reloadProject(project)
 
         assertAppliedConfiguration("initial")
         assertFalse(ScriptConfigurationManager.hasNewRoots(project))
