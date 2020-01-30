@@ -17,8 +17,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.lexer.KtTokens.SUSPEND_KEYWORD
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 fun showDecompiledCode(sourceFile: KtFile) {
@@ -30,6 +34,8 @@ class KotlinBytecodeDecompilerTask(val file: KtFile) : Task.Backgroundable(file.
         val decompilerService = KotlinDecompilerService.getInstance() ?: return
 
         indicator.text = "Decompiling ${file.name}"
+
+        kt25937verificationCheck()
 
         val decompiledText = try {
             decompilerService.decompile(file)
@@ -58,6 +64,25 @@ class KotlinBytecodeDecompilerTask(val file: KtFile) : Task.Backgroundable(file.
                 OpenFileDescriptor(file.project, result).navigate(true)
             }
         }
+    }
+
+    private fun kt25937verificationCheck() {
+        var safeDecompilation = true
+        val stubTree = file.calcStubTree()
+        for (stub in stubTree.plainList) {
+            val stubPsi = stub.psi
+            if (stubPsi is KtModifierListOwner && stubPsi.hasModifier(SUSPEND_KEYWORD)) {
+                if (stubPsi.elementType == KtNodeTypes.TYPE_REFERENCE)
+                    safeDecompilation = false
+                break
+            }
+        }
+        if (file.isCompiled) {
+            safeDecompilation = false
+        }
+        safeDecompilation = false
+        if (!safeDecompilation)
+            throw DecompileFailedException("${file.name} contains unsupported suspend-blocks, please refer to KT-25937.", Exception())
     }
 }
 
