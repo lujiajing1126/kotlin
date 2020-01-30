@@ -55,7 +55,7 @@ fun h(b: B) {
 
 fun k() {
     A().foo(1, *getArr())
-    bar(2, *getArr())
+    <!INAPPLICABLE_CANDIDATE!>bar<!>(2, *getArr())
     <!INAPPLICABLE_CANDIDATE!>baz<!>(*getArr())
 }
 
