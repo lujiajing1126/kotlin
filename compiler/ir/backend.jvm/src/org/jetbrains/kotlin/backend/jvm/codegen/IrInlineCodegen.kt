@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.codegen
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineParameter
 import org.jetbrains.kotlin.backend.jvm.ir.isLambda
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.codegen.ValueKind
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -43,15 +45,18 @@ class IrInlineCodegen(
     typeParameterMappings: TypeParameterMappings<IrType>,
     sourceCompiler: SourceCompilerForInline,
     reifiedTypeInliner: ReifiedTypeInliner<IrType>
-) : InlineCodegen<ExpressionCodegen>(
-    codegen, state, function.descriptor, methodOwner, signature, typeParameterMappings, sourceCompiler, reifiedTypeInliner
-), IrCallGenerator {
+) :
+    InlineCodegen<ExpressionCodegen>(
+        codegen, state, function.descriptor, methodOwner, signature, typeParameterMappings, sourceCompiler, reifiedTypeInliner
+    ),
+    IrCallGenerator {
+
     override fun generateAssertFieldIfNeeded(info: RootInliningContext) {
         if (info.generateAssertField && (sourceCompiler as IrSourceCompilerForInline).isPrimaryCopy) {
-            codegen.classCodegen.generateAssertFieldIfNeeded()?.let {
+            codegen.classCodegen.generateAssertFieldIfNeeded()?.run {
                 // Generating <clinit> right now, so no longer can insert the initializer into it.
                 // Instead, ask ExpressionCodegen to generate the code for it directly.
-                it.accept(codegen, BlockInfo()).discard()
+                accept(codegen, BlockInfo()).discard()
             }
         }
     }
@@ -149,13 +154,26 @@ class IrInlineCodegen(
         invocationParamBuilder.markValueParametersStart()
     }
 
+    private inner class IrInlineCall(
+        private val irFunctionAccessExpression: IrFunctionAccessExpression
+    ) : InlineCall {
+
+        override val calleeDescriptor: CallableDescriptor =
+            irFunctionAccessExpression.symbol.descriptor.original
+
+        override val callElement: PsiElement
+            get() = codegen.context.psiSourceManager.findPsiElement(irFunctionAccessExpression, function)
+                ?: codegen.context.psiSourceManager.findPsiElement(function)
+                ?: throw AssertionError("No PSI element for inline function call: $calleeDescriptor")
+    }
+
     override fun genCall(
         callableMethod: IrCallableMethod,
         codegen: ExpressionCodegen,
         expression: IrFunctionAccessExpression
     ) {
         // TODO port inlining cycle detection to IrFunctionAccessExpression & pass it
-        state.globalInlineContext.enterIntoInlining(null)
+        state.globalInlineContext.enterIntoInlining(IrInlineCall(expression))
         try {
             performInline(
                 expression.symbol.owner.typeParameters.map { it.symbol },
@@ -164,7 +182,7 @@ class IrInlineCodegen(
                 codegen.typeMapper.typeSystem
             )
         } finally {
-            state.globalInlineContext.exitFromInliningOf(null)
+            state.globalInlineContext.exitFromInliningOf(IrInlineCall(expression))
         }
     }
 

@@ -17,35 +17,34 @@
 package org.jetbrains.kotlin.codegen
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.codegen.inline.InlineCall
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
 class InlineCycleReporter(private val diagnostics: DiagnosticSink) {
 
     private val processingFunctions = linkedMapOf<PsiElement, CallableDescriptor>()
 
-    fun enterIntoInlining(call: ResolvedCall<*>?): Boolean {
-        //null call for default method inlining
+    fun enterIntoInlining(call: InlineCall?): Boolean {
+        // null call for default method inlining
         if (call != null) {
-            val callElement = call.call.callElement
+            val callElement = call.callElement
             if (processingFunctions.contains(callElement)) {
                 val cycle = processingFunctions.asSequence().dropWhile { it.key != callElement }
-                cycle.forEach {
-                    diagnostics.report(Errors.INLINE_CALL_CYCLE.on(it.key, it.value))
+                for ((cycleElement, cycleCallee) in cycle) {
+                    diagnostics.report(Errors.INLINE_CALL_CYCLE.on(cycleElement, cycleCallee))
                 }
                 return false
             }
-            processingFunctions.put(callElement, call.resultingDescriptor.original)
+            processingFunctions[callElement] = call.calleeDescriptor
         }
         return true
     }
 
-    fun exitFromInliningOf(call: ResolvedCall<*>?) {
+    fun exitFromInliningOf(call: InlineCall?) {
         if (call != null) {
-            val callElement = call.call.callElement
+            val callElement = call.callElement
             processingFunctions.remove(callElement)
         }
     }
