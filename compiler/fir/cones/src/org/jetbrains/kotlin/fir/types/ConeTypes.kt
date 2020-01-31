@@ -107,6 +107,10 @@ open class ConeFlexibleType(val lowerBound: ConeKotlinType, val upperBound: Cone
         val message = { "Bounds violation: $lowerBound, $upperBound" }
         require(lowerBound is SimpleTypeMarker, message)
         require(upperBound is SimpleTypeMarker, message)
+
+        if (lowerBound.nullability == upperBound.nullability) {
+            println("!")
+        }
     }
 
     override val typeArguments: Array<out ConeKotlinTypeProjection>
