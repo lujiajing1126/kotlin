@@ -79,6 +79,13 @@ class NewMultiplatformIT : BaseGradleIT() {
     )
 
     @Test
+    fun testLibAndAppJsMixed() = doTestLibAndApp(
+        "sample-lib",
+        "sample-app",
+        JsMode.MIXED
+    )
+
+    @Test
     fun testLibAndAppWithGradleKotlinDsl() = doTestLibAndApp(
         "sample-lib-gradle-kotlin-dsl",
         "sample-app-gradle-kotlin-dsl",
@@ -90,6 +97,13 @@ class NewMultiplatformIT : BaseGradleIT() {
         "sample-lib-gradle-kotlin-dsl",
         "sample-app-gradle-kotlin-dsl",
         JsMode.IR
+    )
+
+    @Test
+    fun testLibAndAppWithGradleKotlinDslJsMixed() = doTestLibAndApp(
+        "sample-lib-gradle-kotlin-dsl",
+        "sample-app-gradle-kotlin-dsl",
+        JsMode.MIXED
     )
 
     private fun doTestLibAndApp(

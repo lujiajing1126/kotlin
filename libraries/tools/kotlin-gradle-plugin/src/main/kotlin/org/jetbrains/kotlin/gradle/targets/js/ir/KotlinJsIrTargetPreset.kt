@@ -25,7 +25,7 @@ open class KotlinJsIrTargetPreset(
     override val platformType: KotlinPlatformType
         get() = KotlinPlatformType.js
 
-    override fun instantiateTarget(): KotlinJsIrTarget {
+    override fun instantiateTarget(name: String): KotlinJsIrTarget {
         return project.objects.newInstance(KotlinJsIrTarget::class.java, project, platformType, mixedMode)
     }
 
