@@ -192,10 +192,15 @@ abstract class SingleAbstractMethodLowering(val context: CommonBackendContext) :
             dispatchReceiverParameter = subclass.thisReceiver!!.copyTo(this)
             superMethod.valueParameters.mapTo(valueParameters) { it.copyTo(this) }
             body = context.createIrBuilder(symbol).run {
-                irExprBody(irCall(wrappedFunctionClass.functions.single { it.name == OperatorNameConventions.INVOKE }).apply {
+                val callResult = irCall(wrappedFunctionClass.functions.single { it.name == OperatorNameConventions.INVOKE }).apply {
                     dispatchReceiver = irGetField(irGet(dispatchReceiverParameter!!), field)
                     valueParameters.forEachIndexed { i, parameter -> putValueArgument(i, irGet(parameter)) }
-                })
+                }
+                val result = if (returnType == context.irBuiltIns.unitType)
+                    callResult
+                else
+                    irReturn(callResult)
+                irExprBody(result)
             }
         }
 
