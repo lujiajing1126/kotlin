@@ -14,7 +14,7 @@ class GenericDerivedClass<T> : GenericBaseClass<T>(), GenericBaseInterface<T> {
     override fun bar(x: T): T = super.bar(x)
 
     override fun ambiguous(x: T): T =
-            super.ambiguous(x)
+            super.<!AMBIGUITY!>ambiguous<!>(x)
 }
 
 class SpecializedDerivedClass : GenericBaseClass<Int>(), GenericBaseInterface<String> {

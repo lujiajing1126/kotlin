@@ -36,10 +36,10 @@ abstract class ResolutionStage {
 
 abstract class CheckerStage : ResolutionStage()
 
-internal fun FirExpression.isImplicitSuper(): Boolean {
+internal fun FirExpression.isSuperReferenceExpression(): Boolean {
     return if (this is FirQualifiedAccessExpression) {
         val calleeReference = calleeReference
-        calleeReference is FirSuperReference && calleeReference.superTypeRef is FirImplicitTypeRef
+        calleeReference is FirSuperReference
     } else false
 }
 
@@ -50,7 +50,7 @@ internal object CheckExplicitReceiverConsistency : ResolutionStage() {
         // TODO: add invoke cases
         when (receiverKind) {
             NO_EXPLICIT_RECEIVER -> {
-                if (explicitReceiver != null && explicitReceiver !is FirResolvedQualifier && !explicitReceiver.isImplicitSuper()) {
+                if (explicitReceiver != null && explicitReceiver !is FirResolvedQualifier && !explicitReceiver.isSuperReferenceExpression()) {
                     return sink.yieldApplicability(CandidateApplicability.WRONG_RECEIVER)
                 }
             }
@@ -118,7 +118,7 @@ internal sealed class CheckReceivers : ResolutionStage() {
         if (expectedReceiverType != null) {
             if (explicitReceiverExpression != null &&
                 explicitReceiverKind.shouldBeCheckedAgainstExplicit() &&
-                !explicitReceiverExpression.isImplicitSuper()
+                !explicitReceiverExpression.isSuperReferenceExpression()
             ) {
                 candidate.resolveArgumentExpression(
                     candidate.csBuilder,

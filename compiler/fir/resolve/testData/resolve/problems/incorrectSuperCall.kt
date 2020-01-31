@@ -11,6 +11,6 @@ class C : A, B() {
     override fun foo() {
         super.foo()
 
-        super.bar() // should be ambiguity (NB: really we should have overridden bar in C)
+        super.<!AMBIGUITY!>bar<!>() // should be ambiguity (NB: really we should have overridden bar in C)
     }
 }

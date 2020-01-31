@@ -118,6 +118,7 @@ import org.jetbrains.kotlin.fir.types.FirDynamicTypeRef
 import org.jetbrains.kotlin.fir.types.FirFunctionTypeRef
 import org.jetbrains.kotlin.fir.types.FirResolvedFunctionTypeRef
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
+import org.jetbrains.kotlin.fir.types.FirComposedSuperTypeRef
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 
 /*
@@ -576,6 +577,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(implicitTypeRef)
     }
 
+    open fun visitComposedSuperTypeRef(composedSuperTypeRef: FirComposedSuperTypeRef) {
+        visitElement(composedSuperTypeRef)
+    }
+
     open fun visitContractDescription(contractDescription: FirContractDescription) {
         visitElement(contractDescription)
     }
@@ -1030,6 +1035,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitImplicitTypeRef(implicitTypeRef: FirImplicitTypeRef, data: Nothing?) {
         visitImplicitTypeRef(implicitTypeRef)
+    }
+
+    final override fun visitComposedSuperTypeRef(composedSuperTypeRef: FirComposedSuperTypeRef, data: Nothing?) {
+        visitComposedSuperTypeRef(composedSuperTypeRef)
     }
 
     final override fun visitContractDescription(contractDescription: FirContractDescription, data: Nothing?) {

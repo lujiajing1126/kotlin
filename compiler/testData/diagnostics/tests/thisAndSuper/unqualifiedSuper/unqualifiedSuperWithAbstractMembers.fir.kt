@@ -22,7 +22,7 @@ interface I {
 
 class B : A(), I {
     override val x: Int = 12345
-    override val y: Int = super.y
+    override val y: Int = super.<!AMBIGUITY!>y<!>
 
     override fun foo(): Int {
         super.foo()
@@ -30,10 +30,10 @@ class B : A(), I {
     }
 
     override fun bar() {
-        super.bar()
+        super.<!AMBIGUITY!>bar<!>()
     }
 
     override fun qux() {
-        super.qux()
+        super.<!AMBIGUITY!>qux<!>()
     }
 }

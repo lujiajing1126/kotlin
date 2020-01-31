@@ -17,16 +17,16 @@ import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
+import org.jetbrains.kotlin.fir.resolve.scope
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
+import org.jetbrains.kotlin.fir.scopes.impl.FirCompositeScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirExplicitSimpleImportingScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirStaticScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
-import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
-import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
@@ -354,14 +354,19 @@ class FirTowerResolver(
     private fun runResolverForSuperReceiver(
         info: CallInfo,
         collector: CandidateCollector,
+        superTypeRef: FirTypeRef,
         manager: TowerResolveManager
     ): CandidateCollector {
-        val implicitReceiver = implicitReceivers.firstOrNull { it.usableAsValue && it.receiver is ImplicitDispatchReceiverValue }
-            ?: return collector
+        val scope = when (superTypeRef) {
+            is FirResolvedTypeRef -> superTypeRef.type.scope(session, components.scopeSession)
+            is FirComposedSuperTypeRef -> FirCompositeScope(
+                superTypeRef.superTypeRefs.mapNotNullTo(mutableListOf()) { it.type.scope(session, components.scopeSession) }
+            )
+            else -> null
+        } ?: return collector
         manager.processLevel(
-            MemberScopeTowerLevel(
-                session, components, dispatchReceiver = implicitReceiver.receiver,
-                implicitSuperMode = true, scopeSession = components.scopeSession
+            ScopeTowerLevel(
+                session, components, scope
             ), info, TowerGroup.Member
         )
         return collector
@@ -481,8 +486,8 @@ class FirTowerResolver(
             else -> {
                 if (receiver is FirQualifiedAccessExpression) {
                     val calleeReference = receiver.calleeReference
-                    if (calleeReference is FirSuperReference && calleeReference.superTypeRef is FirImplicitTypeRef) {
-                        return runResolverForSuperReceiver(info, collector, manager)
+                    if (calleeReference is FirSuperReference) {
+                        return runResolverForSuperReceiver(info, collector, receiver.typeRef, manager)
                     }
                 }
                 runResolverForExpressionReceiver(info, collector, receiver, manager)
