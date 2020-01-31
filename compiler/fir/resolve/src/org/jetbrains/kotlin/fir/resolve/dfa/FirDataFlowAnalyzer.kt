@@ -393,7 +393,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     // ----------------------------------- While Loop -----------------------------------
 
     private fun exitCommonLoop(exitNode: LoopExitNode) {
-        val singlePreviousNode = exitNode.alivePreviousNodes.singleOrNull()
+        val singlePreviousNode = exitNode.previousNodes.singleOrNull { !it.isDead }
         if (singlePreviousNode is LoopConditionExitNode) {
             val variable = variableStorage.getOrCreateVariable(singlePreviousNode.fir)
             exitNode.flow = logicSystem.approveStatementsInsideFlow(
