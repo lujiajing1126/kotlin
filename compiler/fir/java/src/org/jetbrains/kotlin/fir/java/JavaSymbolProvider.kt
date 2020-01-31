@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeNullability
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.FirResolvedTypeRefImpl
-import org.jetbrains.kotlin.load.java.FakePureImplementationsProvider
 import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.java.structure.JavaClass
@@ -156,16 +155,9 @@ class JavaSymbolProvider(
                 ).apply {
                     this.typeParameters += foundClass.typeParameters.convertTypeParameters(javaTypeParameterStack)
                     addAnnotationsFrom(this@JavaSymbolProvider.session, javaClass, javaTypeParameterStack)
-                    val purelyImplementedInterface = FakePureImplementationsProvider.getPurelyImplementedInterface(
-                        firSymbol.classId.asSingleFqName()
-                    )
                     for (supertype in javaClass.supertypes) {
                         superTypeRefs += supertype.toFirResolvedTypeRef(
-                            this@JavaSymbolProvider.session, javaTypeParameterStack,
-                            typeParametersNullability = when (purelyImplementedInterface) {
-                                null -> ConeNullability.UNKNOWN
-                                else -> ConeNullability.NOT_NULL
-                            }
+                            this@JavaSymbolProvider.session, javaTypeParameterStack, typeParametersNullability = ConeNullability.UNKNOWN
                         )
                     }
                     // TODO: may be we can process fields & methods later.
