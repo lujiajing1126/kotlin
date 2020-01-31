@@ -12,6 +12,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTargetConfigurator
+import org.jetbrains.kotlin.gradle.targets.js.ir.IR_TARGET_SUFFIX
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrSingleTargetPreset
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTargetConfigurator
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTargetPreset
@@ -29,7 +30,7 @@ open class KotlinJsTargetPreset(
 
     override fun instantiateTarget(): KotlinJsTarget {
 
-        val irTarget = irPreset?.createTarget("JsIr")
+        val irTarget = irPreset?.createTarget("js$IR_TARGET_SUFFIX")
 
         return project.objects.newInstance(
             KotlinJsTarget::class.java,

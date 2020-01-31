@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.LEGACY_DISAMBIGUATION_CLASSIFIER
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrType.DEVELOPMENT
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrType.PRODUCTION
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
@@ -43,4 +45,14 @@ class KotlinJsIrCompilation(
         super.addSourcesToCompileTask(sourceSet, addAsCommonSources)
         allSources.add(sourceSet.kotlin)
     }
+
+    override val defaultSourceSetName: String
+        get() {
+            return lowerCamelCaseName(
+                if ((target as KotlinJsIrTarget).mixedMode) {
+                    target.disambiguationClassifier?.removeSuffix(IR_TARGET_SUFFIX)
+                } else target.disambiguationClassifier,
+                compilationName
+            )
+        }
 }
